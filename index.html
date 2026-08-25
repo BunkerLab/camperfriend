@@ -37,10 +37,22 @@
   .clock.on .clock-big { color: var(--coral-osc); }
   .clock-big.off { color: var(--gris-claro); }
   .clock-note { font-size: 13px; color: var(--coral-osc); margin-top: 8px; }
+  .live { display: inline-flex; align-items: center; gap: 7px; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--coral);
+              animation: pulse 1s steps(1,end) infinite; }
+  @keyframes pulse { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
   input.nota, input.edit-field {
     width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--gris-claro);
     font-size: 15px; margin-bottom: 12px; outline: none; font-family: inherit; color: var(--tinta);
     transition: border-color .15s;
+  }
+  input.edit-field[type="datetime-local"] {
+    -webkit-appearance: none; appearance: none; background: var(--caja);
+    min-height: 50px; display: block;
+  }
+  input.edit-field[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left; margin: 0;
   }
   input.nota::placeholder { color: #B0B0B0; }
   input.nota:focus, input.edit-field:focus { border-color: var(--tinta); }
@@ -198,7 +210,7 @@ function renderApp() {
       </div>
     </header>
     <div class="clock ${activa?'on':''}">
-      <div class="clock-lbl">${activa?"Trabajando desde las "+fmtHora(activa.inicio):"Sin fichaje activo"}</div>
+      <div class="clock-lbl">${activa?`<span class="live"><span class="live-dot"></span>Trabajando desde las ${fmtHora(activa.inicio)}</span>`:"Sin fichaje activo"}</div>
       <div class="clock-big ${activa?'':'off'}" id="clockBig">${activa?fmtDur(Date.now()-activa.inicio):"0h 00m"}</div>
       ${activa&&activa.nota?`<div class="clock-note">“${escapeHtml(activa.nota)}”</div>`:""}
     </div>
