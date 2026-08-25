@@ -9,81 +9,94 @@
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   :root {
-    --verde: #2E5D4B; --verde-claro: #EEF3F0; --ambar: #C4622D;
-    --gris: #889; --fondo: #DDE4E0; --caja: #F6F8F7;
+    --coral: #FF5A5F; --coral-osc: #E0484D; --coral-suave: #FFF0F0;
+    --tinta: #222222; --gris: #717171; --gris-claro: #EBEBEB;
+    --fondo: #F7F7F7; --caja: #FFFFFF;
   }
   body {
-    margin: 0; font-family: system-ui, -apple-system, sans-serif;
-    background: var(--fondo); min-height: 100vh;
+    margin: 0; font-family: "Inter", system-ui, -apple-system, sans-serif;
+    background: var(--fondo); min-height: 100vh; color: var(--tinta);
     display: flex; align-items: flex-start; justify-content: center; padding: 16px;
+    -webkit-font-smoothing: antialiased;
   }
   .phone {
-    width: 100%; max-width: 420px; background: #fff; border-radius: 26px;
-    padding: 20px; box-shadow: 0 12px 40px rgba(0,0,0,.15);
+    width: 100%; max-width: 400px; background: var(--caja); border-radius: 20px;
+    padding: 24px; box-shadow: 0 6px 20px rgba(0,0,0,.05), 0 1px 3px rgba(0,0,0,.04);
   }
-  header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-  .logo { font-size: 28px; background: var(--verde-claro); width: 48px; height: 48px;
-          border-radius: 13px; display: flex; align-items: center; justify-content: center; }
-  .title { font-weight: 700; font-size: 17px; color: var(--verde); }
-  .sub { font-size: 12px; color: var(--gris); }
-  .clock { background: var(--caja); border-radius: 18px; padding: 22px 16px;
-           text-align: center; margin-bottom: 14px; border: 2px solid transparent; transition: .3s; }
-  .clock.on { background: var(--verde-claro); border-color: var(--verde); }
-  .clock-lbl { font-size: 13px; color: #778; margin-bottom: 6px; }
-  .clock-big { font-size: 42px; font-weight: 800; color: var(--verde);
-               letter-spacing: -1px; font-variant-numeric: tabular-nums; }
-  .clock-big.off { opacity: .35; }
-  .clock-note { font-size: 13px; color: var(--verde); margin-top: 6px; font-style: italic; }
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .logo { font-size: 24px; background: var(--coral-suave); width: 44px; height: 44px;
+          border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+  .title { font-weight: 600; font-size: 16px; color: var(--tinta); letter-spacing: -.2px; }
+  .sub { font-size: 13px; color: var(--gris); margin-top: 1px; }
+  .clock { background: var(--fondo); border-radius: 16px; padding: 26px 16px;
+           text-align: center; margin-bottom: 16px; border: 1px solid transparent; transition: .25s; }
+  .clock.on { background: var(--coral-suave); border-color: rgba(255,90,95,.25); }
+  .clock-lbl { font-size: 13px; color: var(--gris); margin-bottom: 8px; }
+  .clock-big { font-size: 46px; font-weight: 700; color: var(--tinta);
+               letter-spacing: -1.5px; font-variant-numeric: tabular-nums; }
+  .clock.on .clock-big { color: var(--coral-osc); }
+  .clock-big.off { color: var(--gris-claro); }
+  .clock-note { font-size: 13px; color: var(--coral-osc); margin-top: 8px; }
   input.nota, input.edit-field {
-    width: 100%; padding: 13px 15px; border-radius: 12px; border: 1.5px solid #DDE4E0;
-    font-size: 15px; margin-bottom: 12px; outline: none; font-family: inherit;
+    width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--gris-claro);
+    font-size: 15px; margin-bottom: 12px; outline: none; font-family: inherit; color: var(--tinta);
+    transition: border-color .15s;
   }
-  input.nota:focus, input.edit-field:focus { border-color: var(--verde); }
-  .btn { width: 100%; padding: 17px; border-radius: 15px; border: none; font-size: 19px;
-         font-weight: 700; color: #fff; cursor: pointer; margin-bottom: 16px; }
-  .btn:active { transform: scale(.98); }
-  .btn.start { background: var(--verde); }
-  .btn.stop { background: var(--ambar); }
-  .btn:disabled { opacity: .5; }
-  .totals { display: flex; gap: 10px; margin-bottom: 18px; }
-  .tbox { flex: 1; background: var(--caja); border-radius: 13px; padding: 13px; text-align: center; }
-  .tnum { font-size: 23px; font-weight: 800; color: var(--verde); }
-  .tlbl { font-size: 11px; color: var(--gris); margin-top: 2px; }
+  input.nota::placeholder { color: #B0B0B0; }
+  input.nota:focus, input.edit-field:focus { border-color: var(--tinta); }
+  .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 16px;
+         font-weight: 600; color: #fff; cursor: pointer; margin-bottom: 18px; letter-spacing: -.2px;
+         transition: transform .08s, background .15s; }
+  .btn:active { transform: scale(.985); }
+  .btn.start { background: var(--coral); }
+  .btn.start:active { background: var(--coral-osc); }
+  .btn.stop { background: var(--tinta); }
+  .btn:disabled { opacity: .4; }
+  .totals { display: flex; gap: 12px; margin-bottom: 24px; }
+  .tbox { flex: 1; background: var(--fondo); border-radius: 14px; padding: 16px 12px; text-align: center; }
+  .tnum { font-size: 24px; font-weight: 700; color: var(--tinta); letter-spacing: -.5px; }
+  .tlbl { font-size: 12px; color: var(--gris); margin-top: 3px; }
   .hist-head { display: flex; justify-content: space-between; align-items: center;
-               margin-bottom: 10px; font-size: 15px; font-weight: 700; color: #334; }
-  .refresh { background: none; border: 1px solid #cdd; border-radius: 9px;
-             padding: 6px 11px; font-size: 13px; color: var(--verde); cursor: pointer; }
-  .list { display: flex; flex-direction: column; gap: 8px; }
-  .empty { color: #99a; font-size: 14px; text-align: center; padding: 24px 10px; }
-  .item { background: var(--caja); border-radius: 12px; padding: 11px 14px; }
+               margin-bottom: 12px; font-size: 15px; font-weight: 600; color: var(--tinta); }
+  .refresh { background: none; border: 1px solid var(--gris-claro); border-radius: 20px;
+             padding: 7px 14px; font-size: 13px; color: var(--tinta); cursor: pointer; font-weight: 500;
+             transition: border-color .15s; }
+  .refresh:active { border-color: var(--tinta); }
+  .list { display: flex; flex-direction: column; gap: 0; }
+  .empty { color: var(--gris); font-size: 14px; text-align: center; padding: 28px 10px; }
+  .item { background: var(--caja); padding: 16px 2px; border-bottom: 1px solid var(--gris-claro); }
+  .item:last-child { border-bottom: none; }
   .item-top { display: flex; justify-content: space-between; align-items: center; }
-  .item-dur { font-weight: 700; color: #334; font-size: 16px; }
-  .item-meta { font-size: 12px; color: var(--gris); margin-top: 2px; }
-  .item-nota { font-size: 13px; color: var(--verde); margin-top: 3px; }
-  .item-right { display: flex; align-items: center; gap: 8px; }
-  .item-euro { font-weight: 700; color: var(--ambar); font-size: 15px; }
+  .item-dur { font-weight: 600; color: var(--tinta); font-size: 16px; letter-spacing: -.2px; }
+  .item-meta { font-size: 13px; color: var(--gris); margin-top: 3px; }
+  .item-nota { font-size: 14px; color: var(--tinta); margin-top: 4px; }
+  .item-right { display: flex; align-items: center; gap: 12px; }
+  .item-euro { font-weight: 600; color: var(--tinta); font-size: 15px; }
   .edit-btn { background: none; border: none; color: var(--gris); font-size: 13px;
-              cursor: pointer; text-decoration: underline; padding: 2px 4px; }
-  .edit-box { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8e5; }
-  .edit-box label { font-size: 12px; color: var(--gris); display: block; margin-bottom: 3px; }
-  .edit-row { display: flex; gap: 8px; }
+              cursor: pointer; text-decoration: underline; padding: 2px 4px; font-weight: 500; }
+  .edit-box { margin-top: 14px; padding-top: 4px; }
+  .edit-box label { font-size: 12px; color: var(--gris); display: block; margin-bottom: 4px; font-weight: 500; }
+  .edit-row { display: flex; flex-direction: column; gap: 10px; }
   .edit-row > div { flex: 1; }
-  .edit-actions { display: flex; gap: 8px; margin-top: 4px; }
-  .mini { padding: 9px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; flex: 1; }
-  .mini.save { background: var(--verde); color: #fff; }
-  .mini.cancel { background: #e2e8e5; color: #445; }
-  .mini.del { background: #fbeae2; color: var(--ambar); }
-  .cfg { margin-top: 18px; font-size: 12px; color: var(--gris); text-align: center; line-height: 1.7; }
-  .cfg a { color: var(--verde); cursor: pointer; text-decoration: underline; }
-  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px;
-           background: var(--verde-claro); color: var(--verde); font-weight: 600; margin-left: 6px; }
+  .edit-actions { display: flex; gap: 8px; margin-top: 6px; }
+  .mini { padding: 11px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; flex: 1; }
+  .mini.save { background: var(--coral); color: #fff; }
+  .mini.cancel { background: var(--fondo); color: var(--tinta); border: 1px solid var(--gris-claro); }
+  .mini.del { background: none; color: var(--coral-osc); border: 1px solid var(--gris-claro); }
+  .cfg { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--gris-claro);
+         font-size: 13px; color: var(--gris); text-align: center; line-height: 1.9; }
+  .cfg a { color: var(--tinta); cursor: pointer; text-decoration: underline; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 20px;
+           background: var(--coral-suave); color: var(--coral-osc); font-weight: 600; margin-left: 4px; }
   /* Pantalla de acceso */
-  .gate { text-align: center; padding: 20px 10px; }
-  .gate h2 { color: var(--verde); margin: 10px 0 4px; }
-  .gate p { color: var(--gris); font-size: 14px; margin: 0 0 18px; }
-  .status { font-size: 12px; color: var(--gris); text-align: center; margin-top: 10px; min-height: 16px; }
-  .err { color: var(--ambar); }
+  .gate { text-align: center; padding: 16px 6px; }
+  .gate h2 { color: var(--tinta); margin: 12px 0 4px; font-weight: 600; letter-spacing: -.3px; }
+  .gate p { color: var(--gris); font-size: 14px; margin: 0 0 20px; }
+  .status { font-size: 13px; color: var(--gris); text-align: center; margin-top: 10px; min-height: 16px; }
+  .err { color: var(--coral-osc); }
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -97,14 +110,17 @@
 const SUPABASE_URL = "https://sirhampdbynywexmzeum.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpcmhhbXBkYnlueXdleG16ZXVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2ODY0NDIsImV4cCI6MjEwMzI2MjQ0Mn0.SGZAaoI7AOChS8X19ucN9n7XY4Pev1b1xG9VchkXP0s";
 const TARIFA_DEFECTO = 10; // €/hora
-const VENTANA_EDICION_MIN = 60; // minutos que se puede editar tras terminar
+const VENTANA_EDICION_MIN = 60; // minutos que puede editar Hugo tras terminar
+const PASS_ADMIN = "camper-edgar"; // contraseña de Edgar (admin) — cámbiala por la que quieras
 // ═══════════════════════════════════════════════════════════════
 
 const LKEY = "fichador_camper_cloud";
 let sb = null, activa = null, historial = [], tarifa = TARIFA_DEFECTO;
 let codigo = localStorage.getItem(LKEY + "_codigo") || null;
+let persona = localStorage.getItem(LKEY + "_persona") || null; // "Hugo" | "Edgar"
 let editando = null; // id del fichaje en edición
 let timer = null;
+const esAdmin = () => persona === "Edgar";
 
 const cfgOk = SUPABASE_URL !== "PON_AQUI_TU_URL" && SUPABASE_KEY !== "PON_AQUI_TU_ANON_KEY";
 if (cfgOk) sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -138,6 +154,37 @@ function renderGate(msg) {
   $("codeInput").addEventListener("keydown", e => { if (e.key==="Enter") $("enterBtn").click(); });
 }
 
+// ── Pantalla: ¿Quién eres? ─────────────────────────────────────
+function renderPersona(msg) {
+  $("app").innerHTML = `
+    <div class="gate">
+      <div class="logo" style="margin:0 auto">🚐</div>
+      <h2>¿Quién eres?</h2>
+      <p>Elige tu nombre para entrar</p>
+      <button class="btn start" id="soyHugo" style="margin-bottom:12px">Hugo</button>
+      <button class="btn" id="soyEdgar" style="background:var(--tinta)">Edgar (admin)</button>
+      <div id="adminPass" style="display:none;margin-top:16px">
+        <input class="nota" id="passInput" type="password" placeholder="Contraseña de admin" style="text-align:center">
+        <button class="btn start" id="passBtn">Entrar como Edgar</button>
+      </div>
+      <div class="status ${msg?'err':''}" id="pStatus">${msg||""}</div>
+      <div style="margin-top:14px"><a class="cfg-link" id="cambiarCodigo" style="color:var(--gris);font-size:12px;text-decoration:underline;cursor:pointer">cambiar código</a></div>
+    </div>`;
+  $("soyHugo").onclick = () => { persona = "Hugo"; localStorage.setItem(LKEY+"_persona","Hugo"); cargar(); };
+  $("soyEdgar").onclick = () => { $("adminPass").style.display = "block"; $("passInput").focus(); };
+  const entrarEdgar = () => {
+    if ($("passInput").value === PASS_ADMIN) {
+      persona = "Edgar"; localStorage.setItem(LKEY+"_persona","Edgar"); cargar();
+    } else { renderPersona("Contraseña incorrecta."); $("adminPass").style.display="block"; }
+  };
+  $("passBtn").onclick = entrarEdgar;
+  $("passInput").addEventListener("keydown", e => { if (e.key==="Enter") entrarEdgar(); });
+  $("cambiarCodigo").onclick = () => {
+    localStorage.removeItem(LKEY+"_codigo"); localStorage.removeItem(LKEY+"_persona");
+    codigo = null; persona = null; renderGate();
+  };
+}
+
 // ── App principal ──────────────────────────────────────────────
 function renderApp() {
   const totMs = historial.reduce((a,s)=>a+(s.fin-s.inicio),0);
@@ -167,14 +214,17 @@ function renderApp() {
     </div>
     <div class="list" id="list"></div>
     <div class="cfg">
-      Conectado con código <b>${escapeHtml(codigo)}</b> · <a id="salir">salir</a><br>
-      Tarifa ${tarifa}€/h · <a id="cfgTarifa">cambiar</a>
+      ${escapeHtml(persona||"")}${esAdmin()?' <span class="badge">admin</span>':''} · <a id="salir">salir</a><br>
+      Tarifa ${tarifa}€/h${esAdmin()?' · <a id="cfgTarifa">cambiar</a>':''}
     </div>`;
 
   $("mainBtn").onclick = onMain;
   $("refreshBtn").onclick = cargar;
-  $("salir").onclick = () => { localStorage.removeItem(LKEY+"_codigo"); codigo=null; renderGate(); };
-  $("cfgTarifa").onclick = onTarifa;
+  $("salir").onclick = () => {
+    localStorage.removeItem(LKEY+"_codigo"); localStorage.removeItem(LKEY+"_persona");
+    codigo=null; persona=null; renderGate();
+  };
+  if ($("cfgTarifa")) $("cfgTarifa").onclick = onTarifa;
   renderList();
   if (activa && !timer) timer = setInterval(()=>{ if(activa) $("clockBig").textContent=fmtDur(Date.now()-activa.inicio); }, 1000);
   if (!activa && timer) { clearInterval(timer); timer=null; }
@@ -186,7 +236,7 @@ function renderList() {
   if (historial.length === 0) { list.innerHTML = '<div class="empty">Aún no hay fichajes. Dale a Empezar.</div>'; return; }
   const ahora = Date.now();
   list.innerHTML = historial.map(s => {
-    const editable = (ahora - s.fin) < VENTANA_EDICION_MIN*60000;
+    const editable = esAdmin() || (ahora - s.fin) < VENTANA_EDICION_MIN*60000;
     const euro = Math.round((s.fin-s.inicio)/3600000*tarifa);
     if (editando != null && String(editando) === String(s.id)) {
       return `<div class="item">
@@ -259,9 +309,15 @@ async function borrar(id) {
   await cargar();
 }
 
-function onTarifa() {
+async function onTarifa() {
+  if (!esAdmin()) return;
   const v = prompt("Precio por hora (€):", tarifa);
-  if (v!==null && !isNaN(parseFloat(v))) { tarifa = parseFloat(v); localStorage.setItem(LKEY+"_tarifa", tarifa); renderApp(); }
+  if (v!==null && !isNaN(parseFloat(v))) {
+    tarifa = parseFloat(v);
+    localStorage.setItem(LKEY+"_tarifa", tarifa);
+    await guardarTarifa(tarifa); // compartir con el otro dispositivo
+    renderApp();
+  }
 }
 
 // ── Supabase ───────────────────────────────────────────────────
@@ -282,12 +338,25 @@ async function sbDelete(id) {
   if (error) alert("Error al borrar: " + error.message);
 }
 
+async function guardarTarifa(t) {
+  const { error } = await sb.from("ajustes").upsert({ codigo, tarifa: t }, { onConflict: "codigo" });
+  if (error) console.warn("No se pudo guardar la tarifa compartida:", error.message);
+}
+async function leerTarifa() {
+  const { data, error } = await sb.from("ajustes").select("tarifa").eq("codigo", codigo).maybeSingle();
+  if (!error && data && data.tarifa != null) return parseFloat(data.tarifa);
+  return null;
+}
+
 async function cargar() {
   if (!cfgOk) { renderApp(); return; }
   if (!codigo) { renderGate(); return; }
+  if (!persona) { renderPersona(); return; }
   // recuperar fichaje activo local
   try { const a = localStorage.getItem(LKEY+"_activa"); activa = a?JSON.parse(a):null; } catch(e){ activa=null; }
   tarifa = parseFloat(localStorage.getItem(LKEY+"_tarifa")) || TARIFA_DEFECTO;
+  // tarifa compartida (la fija Edgar, la ve Hugo)
+  try { const tc = await leerTarifa(); if (tc != null) { tarifa = tc; localStorage.setItem(LKEY+"_tarifa", tc); } } catch(e){}
 
   const { data, error } = await sb.from("fichajes").select("*").eq("codigo", codigo).order("inicio",{ascending:false});
   if (error) {
@@ -306,6 +375,8 @@ if (!cfgOk) {
     <p>Abre el archivo y rellena <b>SUPABASE_URL</b> y <b>SUPABASE_KEY</b> con tus claves (mira la guía).</p></div>`;
 } else if (!codigo) {
   renderGate();
+} else if (!persona) {
+  renderPersona();
 } else {
   cargar();
 }
