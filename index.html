@@ -188,7 +188,7 @@ function renderList() {
   list.innerHTML = historial.map(s => {
     const editable = (ahora - s.fin) < VENTANA_EDICION_MIN*60000;
     const euro = Math.round((s.fin-s.inicio)/3600000*tarifa);
-    if (editando === s.id) {
+    if (editando != null && String(editando) === String(s.id)) {
       return `<div class="item">
         <div class="edit-box" style="border:none;padding-top:0">
           <label>Nota</label>
