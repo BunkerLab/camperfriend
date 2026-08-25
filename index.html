@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2E5D4B">
+<title>Fichador · Camper</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚐</text></svg>">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --verde: #2E5D4B; --verde-claro: #EEF3F0; --ambar: #C4622D;
+    --gris: #889; --fondo: #DDE4E0; --caja: #F6F8F7;
+  }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, sans-serif;
+    background: var(--fondo); min-height: 100vh;
+    display: flex; align-items: flex-start; justify-content: center; padding: 16px;
+  }
+  .phone {
+    width: 100%; max-width: 420px; background: #fff; border-radius: 26px;
+    padding: 20px; box-shadow: 0 12px 40px rgba(0,0,0,.15);
+  }
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .logo { font-size: 28px; background: var(--verde-claro); width: 48px; height: 48px;
+          border-radius: 13px; display: flex; align-items: center; justify-content: center; }
+  .title { font-weight: 700; font-size: 17px; color: var(--verde); }
+  .sub { font-size: 12px; color: var(--gris); }
+  .clock { background: var(--caja); border-radius: 18px; padding: 22px 16px;
+           text-align: center; margin-bottom: 14px; border: 2px solid transparent; transition: .3s; }
+  .clock.on { background: var(--verde-claro); border-color: var(--verde); }
+  .clock-lbl { font-size: 13px; color: #778; margin-bottom: 6px; }
+  .clock-big { font-size: 42px; font-weight: 800; color: var(--verde);
+               letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .clock-big.off { opacity: .35; }
+  .clock-note { font-size: 13px; color: var(--verde); margin-top: 6px; font-style: italic; }
+  input.nota, input.edit-field {
+    width: 100%; padding: 13px 15px; border-radius: 12px; border: 1.5px solid #DDE4E0;
+    font-size: 15px; margin-bottom: 12px; outline: none; font-family: inherit;
+  }
+  input.nota:focus, input.edit-field:focus { border-color: var(--verde); }
+  .btn { width: 100%; padding: 17px; border-radius: 15px; border: none; font-size: 19px;
+         font-weight: 700; color: #fff; cursor: pointer; margin-bottom: 16px; }
+  .btn:active { transform: scale(.98); }
+  .btn.start { background: var(--verde); }
+  .btn.stop { background: var(--ambar); }
+  .btn:disabled { opacity: .5; }
+  .totals { display: flex; gap: 10px; margin-bottom: 18px; }
+  .tbox { flex: 1; background: var(--caja); border-radius: 13px; padding: 13px; text-align: center; }
+  .tnum { font-size: 23px; font-weight: 800; color: var(--verde); }
+  .tlbl { font-size: 11px; color: var(--gris); margin-top: 2px; }
+  .hist-head { display: flex; justify-content: space-between; align-items: center;
+               margin-bottom: 10px; font-size: 15px; font-weight: 700; color: #334; }
+  .refresh { background: none; border: 1px solid #cdd; border-radius: 9px;
+             padding: 6px 11px; font-size: 13px; color: var(--verde); cursor: pointer; }
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .empty { color: #99a; font-size: 14px; text-align: center; padding: 24px 10px; }
+  .item { background: var(--caja); border-radius: 12px; padding: 11px 14px; }
+  .item-top { display: flex; justify-content: space-between; align-items: center; }
+  .item-dur { font-weight: 700; color: #334; font-size: 16px; }
+  .item-meta { font-size: 12px; color: var(--gris); margin-top: 2px; }
+  .item-nota { font-size: 13px; color: var(--verde); margin-top: 3px; }
+  .item-right { display: flex; align-items: center; gap: 8px; }
+  .item-euro { font-weight: 700; color: var(--ambar); font-size: 15px; }
+  .edit-btn { background: none; border: none; color: var(--gris); font-size: 13px;
+              cursor: pointer; text-decoration: underline; padding: 2px 4px; }
+  .edit-box { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8e5; }
+  .edit-box label { font-size: 12px; color: var(--gris); display: block; margin-bottom: 3px; }
+  .edit-row { display: flex; gap: 8px; }
+  .edit-row > div { flex: 1; }
+  .edit-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .mini { padding: 9px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; flex: 1; }
+  .mini.save { background: var(--verde); color: #fff; }
+  .mini.cancel { background: #e2e8e5; color: #445; }
+  .mini.del { background: #fbeae2; color: var(--ambar); }
+  .cfg { margin-top: 18px; font-size: 12px; color: var(--gris); text-align: center; line-height: 1.7; }
+  .cfg a { color: var(--verde); cursor: pointer; text-decoration: underline; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px;
+           background: var(--verde-claro); color: var(--verde); font-weight: 600; margin-left: 6px; }
+  /* Pantalla de acceso */
+  .gate { text-align: center; padding: 20px 10px; }
+  .gate h2 { color: var(--verde); margin: 10px 0 4px; }
+  .gate p { color: var(--gris); font-size: 14px; margin: 0 0 18px; }
+  .status { font-size: 12px; color: var(--gris); text-align: center; margin-top: 10px; min-height: 16px; }
+  .err { color: var(--ambar); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="phone" id="app"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURACIÓN — rellena estas dos líneas con tus claves de Supabase
+//  (las encuentras en Supabase → Project Settings → API)
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL = "https://sirhampdbynywexmzeum.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpcmhhbXBkYnlueXdleG16ZXVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2ODY0NDIsImV4cCI6MjEwMzI2MjQ0Mn0.SGZAaoI7AOChS8X19ucN9n7XY4Pev1b1xG9VchkXP0s";
+const TARIFA_DEFECTO = 10; // €/hora
+const VENTANA_EDICION_MIN = 60; // minutos que se puede editar tras terminar
+// ═══════════════════════════════════════════════════════════════
+
+const LKEY = "fichador_camper_cloud";
+let sb = null, activa = null, historial = [], tarifa = TARIFA_DEFECTO;
+let codigo = localStorage.getItem(LKEY + "_codigo") || null;
+let editando = null; // id del fichaje en edición
+let timer = null;
+
+const cfgOk = SUPABASE_URL !== "PON_AQUI_TU_URL" && SUPABASE_KEY !== "PON_AQUI_TU_ANON_KEY";
+if (cfgOk) sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = (id) => document.getElementById(id);
+const fmtDur = (ms) => { const m = Math.floor(ms/60000); return `${Math.floor(m/60)}h ${String(m%60).padStart(2,"0")}m`; };
+const fmtHora = (ts) => new Date(ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+const fmtFecha = (ts) => new Date(ts).toLocaleDateString("es-ES",{weekday:"short",day:"2-digit",month:"short"});
+const escapeHtml = (s="") => s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// para inputs datetime-local (hora local sin zona)
+const toLocalInput = (ts) => { const d=new Date(ts); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); };
+const fromLocalInput = (v) => new Date(v).getTime();
+
+// ── Pantalla de acceso ─────────────────────────────────────────
+function renderGate(msg) {
+  $("app").innerHTML = `
+    <div class="gate">
+      <div class="logo" style="margin:0 auto">🚐</div>
+      <h2>Fichador · Camper</h2>
+      <p>Introduce el código para acceder</p>
+      <input class="nota" id="codeInput" placeholder="Código secreto" style="text-align:center">
+      <button class="btn start" id="enterBtn">Entrar</button>
+      <div class="status ${msg?'err':''}" id="gateStatus">${msg||""}</div>
+    </div>`;
+  $("enterBtn").onclick = () => {
+    const c = $("codeInput").value.trim();
+    if (!c) { $("gateStatus").textContent = "Escribe el código."; return; }
+    codigo = c; localStorage.setItem(LKEY + "_codigo", c);
+    cargar();
+  };
+  $("codeInput").addEventListener("keydown", e => { if (e.key==="Enter") $("enterBtn").click(); });
+}
+
+// ── App principal ──────────────────────────────────────────────
+function renderApp() {
+  const totMs = historial.reduce((a,s)=>a+(s.fin-s.inicio),0);
+  const totH = totMs/3600000;
+  $("app").innerHTML = `
+    <header>
+      <div class="logo">🚐</div>
+      <div>
+        <div class="title">Fichador · Camper</div>
+        <div class="sub">Ficha tus horas de trabajo</div>
+      </div>
+    </header>
+    <div class="clock ${activa?'on':''}">
+      <div class="clock-lbl">${activa?"Trabajando desde las "+fmtHora(activa.inicio):"Sin fichaje activo"}</div>
+      <div class="clock-big ${activa?'':'off'}" id="clockBig">${activa?fmtDur(Date.now()-activa.inicio):"0h 00m"}</div>
+      ${activa&&activa.nota?`<div class="clock-note">“${escapeHtml(activa.nota)}”</div>`:""}
+    </div>
+    ${!activa?`<input class="nota" id="notaInput" placeholder="¿En qué vas a trabajar? (opcional)">`:""}
+    <button class="btn ${activa?'stop':'start'}" id="mainBtn">${activa?"■ Terminar":"▶ Empezar"}</button>
+    <div class="totals">
+      <div class="tbox"><div class="tnum">${totH.toFixed(1)}h</div><div class="tlbl">acumuladas</div></div>
+      <div class="tbox"><div class="tnum">${Math.round(totH*tarifa)}€</div><div class="tlbl">a ${tarifa}€/h</div></div>
+    </div>
+    <div class="hist-head">
+      <span>Historial</span>
+      <button class="refresh" id="refreshBtn">↻ Actualizar</button>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="cfg">
+      Conectado con código <b>${escapeHtml(codigo)}</b> · <a id="salir">salir</a><br>
+      Tarifa ${tarifa}€/h · <a id="cfgTarifa">cambiar</a>
+    </div>`;
+
+  $("mainBtn").onclick = onMain;
+  $("refreshBtn").onclick = cargar;
+  $("salir").onclick = () => { localStorage.removeItem(LKEY+"_codigo"); codigo=null; renderGate(); };
+  $("cfgTarifa").onclick = onTarifa;
+  renderList();
+  if (activa && !timer) timer = setInterval(()=>{ if(activa) $("clockBig").textContent=fmtDur(Date.now()-activa.inicio); }, 1000);
+  if (!activa && timer) { clearInterval(timer); timer=null; }
+}
+
+function renderList() {
+  const list = $("list");
+  if (!list) return;
+  if (historial.length === 0) { list.innerHTML = '<div class="empty">Aún no hay fichajes. Dale a Empezar.</div>'; return; }
+  const ahora = Date.now();
+  list.innerHTML = historial.map(s => {
+    const editable = (ahora - s.fin) < VENTANA_EDICION_MIN*60000;
+    const euro = Math.round((s.fin-s.inicio)/3600000*tarifa);
+    if (editando === s.id) {
+      return `<div class="item">
+        <div class="edit-box" style="border:none;padding-top:0">
+          <label>Nota</label>
+          <input class="edit-field" id="ed-nota-${s.id}" value="${escapeHtml(s.nota||"")}">
+          <div class="edit-row">
+            <div><label>Empezó</label><input class="edit-field" type="datetime-local" id="ed-ini-${s.id}" value="${toLocalInput(s.inicio)}"></div>
+            <div><label>Terminó</label><input class="edit-field" type="datetime-local" id="ed-fin-${s.id}" value="${toLocalInput(s.fin)}"></div>
+          </div>
+          <div class="edit-actions">
+            <button class="mini save" data-save="${s.id}">Guardar</button>
+            <button class="mini cancel" data-cancel="1">Cancelar</button>
+            <button class="mini del" data-del="${s.id}">Borrar</button>
+          </div>
+        </div></div>`;
+    }
+    return `<div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-dur">${fmtDur(s.fin-s.inicio)}</div>
+          <div class="item-meta">${fmtFecha(s.inicio)} · ${fmtHora(s.inicio)}–${fmtHora(s.fin)}</div>
+          ${s.nota?`<div class="item-nota">${escapeHtml(s.nota)}</div>`:""}
+        </div>
+        <div class="item-right">
+          <span class="item-euro">${euro}€</span>
+          ${editable?`<button class="edit-btn" data-edit="${s.id}">editar</button>`:""}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  list.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{ editando=b.dataset.edit; renderList(); });
+  list.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>{ editando=null; renderList(); });
+  list.querySelectorAll("[data-save]").forEach(b=>b.onclick=()=>guardarEdit(b.dataset.save));
+  list.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>borrar(b.dataset.del));
+}
+
+// ── Acciones ───────────────────────────────────────────────────
+async function onMain() {
+  if (activa) {
+    const fin = Date.now();
+    const reg = { ...activa, fin };
+    activa = null;
+    await sbInsert(reg);
+  } else {
+    const nota = ($("notaInput")?.value || "").trim();
+    activa = { inicio: Date.now(), nota };
+    localStorage.setItem(LKEY+"_activa", JSON.stringify(activa));
+    renderApp();
+    return;
+  }
+  localStorage.removeItem(LKEY+"_activa");
+  await cargar();
+}
+
+async function guardarEdit(id) {
+  const nota = $(`ed-nota-${id}`).value.trim();
+  const inicio = fromLocalInput($(`ed-ini-${id}`).value);
+  const fin = fromLocalInput($(`ed-fin-${id}`).value);
+  if (!(fin > inicio)) { alert("La hora de fin debe ser posterior al inicio."); return; }
+  await sbUpdate(id, { nota, inicio, fin });
+  editando = null;
+  await cargar();
+}
+
+async function borrar(id) {
+  if (!confirm("¿Borrar este fichaje?")) return;
+  await sbDelete(id);
+  editando = null;
+  await cargar();
+}
+
+function onTarifa() {
+  const v = prompt("Precio por hora (€):", tarifa);
+  if (v!==null && !isNaN(parseFloat(v))) { tarifa = parseFloat(v); localStorage.setItem(LKEY+"_tarifa", tarifa); renderApp(); }
+}
+
+// ── Supabase ───────────────────────────────────────────────────
+async function sbInsert(reg) {
+  const { error } = await sb.from("fichajes").insert({
+    codigo, inicio: new Date(reg.inicio).toISOString(), fin: new Date(reg.fin).toISOString(), nota: reg.nota||""
+  });
+  if (error) alert("Error al guardar: " + error.message);
+}
+async function sbUpdate(id, d) {
+  const { error } = await sb.from("fichajes").update({
+    nota: d.nota, inicio: new Date(d.inicio).toISOString(), fin: new Date(d.fin).toISOString()
+  }).eq("id", id).eq("codigo", codigo);
+  if (error) alert("Error al editar: " + error.message);
+}
+async function sbDelete(id) {
+  const { error } = await sb.from("fichajes").delete().eq("id", id).eq("codigo", codigo);
+  if (error) alert("Error al borrar: " + error.message);
+}
+
+async function cargar() {
+  if (!cfgOk) { renderApp(); return; }
+  if (!codigo) { renderGate(); return; }
+  // recuperar fichaje activo local
+  try { const a = localStorage.getItem(LKEY+"_activa"); activa = a?JSON.parse(a):null; } catch(e){ activa=null; }
+  tarifa = parseFloat(localStorage.getItem(LKEY+"_tarifa")) || TARIFA_DEFECTO;
+
+  const { data, error } = await sb.from("fichajes").select("*").eq("codigo", codigo).order("inicio",{ascending:false});
+  if (error) {
+    if (error.message && /invalid|jwt|key/i.test(error.message)) { renderGate("No se pudo conectar. Revisa las claves."); }
+    else { renderGate("Código no válido o sin datos: " + error.message); }
+    return;
+  }
+  historial = (data||[]).map(r => ({ id: r.id, inicio: new Date(r.inicio).getTime(), fin: new Date(r.fin).getTime(), nota: r.nota }));
+  renderApp();
+}
+
+// ── Arranque ───────────────────────────────────────────────────
+if (!cfgOk) {
+  $("app").innerHTML = `<div class="gate"><div class="logo" style="margin:0 auto">🚐</div>
+    <h2>Falta configurar</h2>
+    <p>Abre el archivo y rellena <b>SUPABASE_URL</b> y <b>SUPABASE_KEY</b> con tus claves (mira la guía).</p></div>`;
+} else if (!codigo) {
+  renderGate();
+} else {
+  cargar();
+}
+</script>
+</body>
+</html>
