@@ -33,8 +33,13 @@
     }
   }
   header { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .head-txt { flex: 1; min-width: 0; }
+  .icon-btn { background: var(--fondo); border: none; border-radius: 12px; cursor: pointer;
+              width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+              color: var(--gris); flex-shrink: 0; transition: background .15s, color .15s; }
+  .icon-btn:active { background: var(--gris-claro); color: var(--tinta); }
   .logo { font-size: 24px; background: var(--coral-suave); width: 44px; height: 44px;
-          border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+          border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .title { font-weight: 600; font-size: 16px; color: var(--tinta); letter-spacing: -.2px; }
   .sub { font-size: 13px; color: var(--gris); margin-top: 1px; }
   .clock { background: var(--fondo); border-radius: 16px; padding: 26px 16px;
@@ -86,6 +91,7 @@
   .btn:disabled { opacity: .4; }
   .totals { display: flex; gap: 12px; margin-bottom: 24px; }
   .tbox { flex: 1; background: var(--fondo); border-radius: 14px; padding: 16px 12px; text-align: center; }
+  .tbox.solo { flex: 1 1 100%; }
   .tnum { font-size: 24px; font-weight: 700; color: var(--tinta); letter-spacing: -.5px; }
   .tlbl { font-size: 12px; color: var(--gris); margin-top: 3px; }
   .hist-head { display: flex; justify-content: space-between; align-items: center;
@@ -129,11 +135,47 @@
   .mini.save { background: var(--coral); color: #fff; }
   .mini.cancel { background: var(--fondo); color: var(--tinta); border: 1px solid var(--gris-claro); }
   .mini.del { background: none; color: var(--coral-osc); border: 1px solid var(--gris-claro); }
-  .cfg { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--gris-claro);
-         font-size: 13px; color: var(--gris); text-align: center; line-height: 1.9; }
-  .cfg a { color: var(--tinta); cursor: pointer; text-decoration: underline; }
+  /* Pie */
+  .foot { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--gris-claro);
+          display: flex; justify-content: space-between; align-items: center; }
+  .foot-user { font-size: 14px; color: var(--tinta); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+  .foot-salir { font-size: 13px; color: var(--gris); cursor: pointer; text-decoration: none;
+                padding: 7px 14px; border: 1px solid var(--gris-claro); border-radius: 20px; }
+  .foot-salir:active { border-color: var(--tinta); color: var(--tinta); }
   .badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 20px;
-           background: var(--coral-suave); color: var(--coral-osc); font-weight: 600; margin-left: 4px; }
+           background: var(--coral-suave); color: var(--coral-osc); font-weight: 600; }
+  /* Ajustes */
+  .set-group { margin-bottom: 22px; }
+  .set-group.danger { margin-top: 8px; }
+  .set-label { font-size: 12px; font-weight: 600; color: var(--gris); text-transform: uppercase;
+               letter-spacing: .5px; margin-bottom: 10px; }
+  .set-group.danger .set-label { color: var(--coral-osc); }
+  .set-row { display: flex; justify-content: space-between; align-items: center; gap: 14px;
+             padding: 14px 0; border-bottom: 1px solid var(--gris-claro); }
+  .set-row:last-child { border-bottom: none; }
+  .set-row-t { font-size: 15px; font-weight: 500; color: var(--tinta); }
+  .set-row-s { font-size: 13px; color: var(--gris); margin-top: 2px; }
+  .set-val { font-size: 16px; font-weight: 600; color: var(--tinta); }
+  .set-hint { font-size: 13px; color: var(--gris); margin-top: 8px; }
+  .pill { background: var(--fondo); border: 1px solid var(--gris-claro); border-radius: 20px;
+          padding: 9px 16px; font-size: 14px; font-weight: 600; color: var(--tinta); cursor: pointer;
+          flex-shrink: 0; font-family: inherit; }
+  .pill:active { background: var(--gris-claro); }
+  .pill.danger { background: none; color: var(--coral-osc); border-color: rgba(255,90,95,.4); }
+  .pill.danger:active { background: var(--coral-suave); }
+  /* Segmented control */
+  .seg { display: flex; background: var(--fondo); border-radius: 12px; padding: 4px; gap: 4px; }
+  .seg-btn { flex: 1; border: none; background: none; padding: 12px; border-radius: 9px;
+             font-size: 15px; font-weight: 600; color: var(--gris); cursor: pointer; font-family: inherit;
+             transition: background .15s, color .15s; }
+  .seg-btn.active { background: var(--caja); color: var(--tinta); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  /* Switch */
+  .switch { width: 50px; height: 30px; border-radius: 20px; background: var(--gris-claro);
+            border: none; cursor: pointer; position: relative; flex-shrink: 0; transition: background .2s; padding: 0; }
+  .switch.on { background: var(--coral); }
+  .knob { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%;
+          background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
+  .switch.on .knob { transform: translateX(20px); }
   /* Pantalla de acceso */
   .gate { text-align: center; padding: 16px 6px; }
   .gate h2 { color: var(--tinta); margin: 12px 0 4px; font-weight: 600; letter-spacing: -.3px; }
@@ -166,13 +208,24 @@ let codigo = localStorage.getItem(LKEY + "_codigo") || null;
 let persona = localStorage.getItem(LKEY + "_persona") || null; // "Hugo" | "Edgar"
 let editando = null; // id del fichaje en edición
 let diasAbiertos = new Set(); // claves de día abiertas en el acordeón
+let ocultarGlobal = false;  // ocultar precios para todos (guardado en Supabase)
+let ocultarHugo = false;    // ocultar precios solo en la vista de Hugo (guardado en Supabase)
 let timer = null;
 const esAdmin = () => persona === "Edgar";
+// ¿Se muestran los precios en la vista actual?
+const verPrecios = () => {
+  if (ocultarGlobal) return false;
+  if (ocultarHugo && persona === "Hugo") return false;
+  return true;
+};
 
 const cfgOk = SUPABASE_URL !== "PON_AQUI_TU_URL" && SUPABASE_KEY !== "PON_AQUI_TU_ANON_KEY";
 if (cfgOk) sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id) => document.getElementById(id);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+const ENGRANAJE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>';
+const FLECHA = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>';
 const fmtDur = (ms) => { const m = Math.floor(ms/60000); return `${Math.floor(m/60)}h ${String(m%60).padStart(2,"0")}m`; };
 const fmtHora = (ts) => new Date(ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
 const fmtFecha = (ts) => new Date(ts).toLocaleDateString("es-ES",{weekday:"short",day:"2-digit",month:"short"});
@@ -236,13 +289,15 @@ function renderPersona(msg) {
 function renderApp() {
   const totMs = historial.reduce((a,s)=>a+(s.fin-s.inicio),0);
   const totH = totMs/3600000;
+  const vp = verPrecios();
   $("app").innerHTML = `
     <header>
       <div class="logo">🚐</div>
-      <div>
+      <div class="head-txt">
         <div class="title">Fichador · Camper</div>
         <div class="sub">Ficha tus horas de trabajo</div>
       </div>
+      ${esAdmin()?`<button class="icon-btn" id="ajustesBtn" title="Ajustes">${ENGRANAJE}</button>`:""}
     </header>
     <div class="clock ${activa?'on':''}">
       <div class="clock-lbl">${activa?`<span class="live"><span class="live-dot"></span>Trabajando desde las ${fmtHora(activa.inicio)}</span>`:"Sin fichaje activo"}</div>
@@ -252,17 +307,17 @@ function renderApp() {
     ${!activa?`<input class="nota" id="notaInput" placeholder="¿En qué vas a trabajar? (opcional)">`:""}
     <button class="btn ${activa?'stop':'start'}" id="mainBtn">${activa?"■ Terminar":"▶ Empezar"}</button>
     <div class="totals">
-      <div class="tbox"><div class="tnum">${totH.toFixed(1)}h</div><div class="tlbl">acumuladas</div></div>
-      <div class="tbox"><div class="tnum">${Math.round(totH*tarifa)}€</div><div class="tlbl">a ${tarifa}€/h</div></div>
+      <div class="tbox ${vp?'':'solo'}"><div class="tnum">${totH.toFixed(1)}h</div><div class="tlbl">acumuladas</div></div>
+      ${vp?`<div class="tbox"><div class="tnum">${Math.round(totH*tarifa)}€</div><div class="tlbl">a ${tarifa}€/h</div></div>`:""}
     </div>
     <div class="hist-head">
       <span>Historial</span>
       <button class="refresh" id="refreshBtn">↻ Actualizar</button>
     </div>
     <div class="list" id="list"></div>
-    <div class="cfg">
-      ${escapeHtml(persona||"")}${esAdmin()?' <span class="badge">admin</span>':''} · <a id="salir">salir</a><br>
-      Tarifa ${tarifa}€/h${esAdmin()?' · <a id="cfgTarifa">cambiar</a>':''}
+    <div class="foot">
+      <span class="foot-user">${persona==="Edgar"?"👤":"🔧"} ${escapeHtml(persona||"")}${esAdmin()?' <span class="badge">admin</span>':''}</span>
+      <a id="salir" class="foot-salir">Salir</a>
     </div>`;
 
   $("mainBtn").onclick = onMain;
@@ -271,10 +326,66 @@ function renderApp() {
     localStorage.removeItem(LKEY+"_codigo"); localStorage.removeItem(LKEY+"_persona");
     codigo=null; persona=null; renderGate();
   };
-  if ($("cfgTarifa")) $("cfgTarifa").onclick = onTarifa;
+  if ($("ajustesBtn")) $("ajustesBtn").onclick = renderAjustes;
   renderList();
   if (activa && !timer) timer = setInterval(()=>{ if(activa) $("clockBig").textContent=fmtDur(Date.now()-activa.inicio); }, 1000);
   if (!activa && timer) { clearInterval(timer); timer=null; }
+}
+
+// ── Pantalla de ajustes (solo admin) ───────────────────────────
+function renderAjustes() {
+  $("app").innerHTML = `
+    <header>
+      <button class="icon-btn" id="volverBtn" title="Volver">${FLECHA}</button>
+      <div class="head-txt"><div class="title">Ajustes</div><div class="sub">Solo administrador</div></div>
+    </header>
+
+    <div class="set-group">
+      <div class="set-label">Ver la app como</div>
+      <div class="seg">
+        <button class="seg-btn ${persona==='Hugo'?'active':''}" data-persona="Hugo">🔧 Hugo</button>
+        <button class="seg-btn ${persona==='Edgar'?'active':''}" data-persona="Edgar">👤 Edgar</button>
+      </div>
+      <div class="set-hint">Cambia entre vistas sin salir de la sesión.</div>
+    </div>
+
+    <div class="set-group">
+      <div class="set-label">Tarifa por hora</div>
+      <div class="set-row">
+        <span class="set-val">${tarifa} €/h</span>
+        <button class="pill" id="editTarifa">Cambiar</button>
+      </div>
+    </div>
+
+    <div class="set-group">
+      <div class="set-label">Precios</div>
+      <div class="set-row">
+        <div><div class="set-row-t">Ocultar precios para todos</div><div class="set-row-s">Hugo y Edgar solo verán horas</div></div>
+        <button class="switch ${ocultarGlobal?'on':''}" id="tglGlobal" role="switch"><span class="knob"></span></button>
+      </div>
+      <div class="set-row">
+        <div><div class="set-row-t">Ocultar precios a Hugo</div><div class="set-row-s">Tú sigues viéndolos, Hugo no</div></div>
+        <button class="switch ${ocultarHugo?'on':''}" id="tglHugo" role="switch"><span class="knob"></span></button>
+      </div>
+    </div>
+
+    <div class="set-group danger">
+      <div class="set-label">Zona peligrosa</div>
+      <div class="set-row">
+        <div><div class="set-row-t">Borrar todo el historial</div><div class="set-row-s">Elimina todos los fichajes. Irreversible.</div></div>
+        <button class="pill danger" id="borrarTodo">Borrar</button>
+      </div>
+    </div>`;
+
+  $("volverBtn").onclick = renderApp;
+  $$("[data-persona]").forEach(b=>b.onclick=async ()=>{
+    persona = b.dataset.persona; localStorage.setItem(LKEY+"_persona", persona);
+    await cargar(); // recarga con la vista de la otra persona
+  });
+  $("editTarifa").onclick = onTarifa;
+  $("tglGlobal").onclick = async ()=>{ ocultarGlobal = !ocultarGlobal; await guardarAjustes(); renderAjustes(); };
+  $("tglHugo").onclick = async ()=>{ ocultarHugo = !ocultarHugo; await guardarAjustes(); renderAjustes(); };
+  $("borrarTodo").onclick = borrarTodo;
 }
 
 function claveDia(ts){ const d=new Date(ts); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -334,7 +445,7 @@ function renderList() {
             <div class="item-meta">${fmtDur(s.fin-s.inicio)} · ${fmtHora(s.inicio)}–${fmtHora(s.fin)}</div>
           </div>
           <div class="item-right">
-            <span class="item-euro">${euro}€</span>
+            ${verPrecios()?`<span class="item-euro">${euro}€</span>`:""}
             ${editable?`<button class="edit-icon" data-edit="${s.id}" title="Editar">${LAPIZ}</button>`:""}
           </div>
         </div>
@@ -343,7 +454,7 @@ function renderList() {
     return `<div class="dia ${abierto?'open':''}">
       <button class="dia-head" data-dia="${dia.k}">
         <span class="dia-fecha">${tituloDia(dia.ts)}</span>
-        <span class="dia-tot">${h.toFixed(1)}h · ${Math.round(h*tarifa)}€ <span class="chev">›</span></span>
+        <span class="dia-tot">${h.toFixed(1)}h${verPrecios()?` · ${Math.round(h*tarifa)}€`:""} <span class="chev">›</span></span>
       </button>
       <div class="dia-body">${filas}</div>
     </div>`;
@@ -401,8 +512,8 @@ async function onTarifa() {
   if (v!==null && !isNaN(parseFloat(v))) {
     tarifa = parseFloat(v);
     localStorage.setItem(LKEY+"_tarifa", tarifa);
-    await guardarTarifa(tarifa); // compartir con el otro dispositivo
-    renderApp();
+    await guardarAjustes();
+    renderAjustes();
   }
 }
 
@@ -424,14 +535,29 @@ async function sbDelete(id) {
   if (error) alert("Error al borrar: " + error.message);
 }
 
-async function guardarTarifa(t) {
-  const { error } = await sb.from("ajustes").upsert({ codigo, tarifa: t }, { onConflict: "codigo" });
-  if (error) console.warn("No se pudo guardar la tarifa compartida:", error.message);
+async function guardarTarifa(t) { return guardarAjustes(); }
+async function guardarAjustes() {
+  const { error } = await sb.from("ajustes").upsert(
+    { codigo, tarifa, ocultar_global: ocultarGlobal, ocultar_hugo: ocultarHugo },
+    { onConflict: "codigo" });
+  if (error) console.warn("No se pudieron guardar los ajustes:", error.message);
 }
-async function leerTarifa() {
-  const { data, error } = await sb.from("ajustes").select("tarifa").eq("codigo", codigo).maybeSingle();
-  if (!error && data && data.tarifa != null) return parseFloat(data.tarifa);
-  return null;
+async function leerAjustes() {
+  const { data, error } = await sb.from("ajustes").select("*").eq("codigo", codigo).maybeSingle();
+  if (error || !data) return;
+  if (data.tarifa != null) { tarifa = parseFloat(data.tarifa); localStorage.setItem(LKEY+"_tarifa", tarifa); }
+  ocultarGlobal = !!data.ocultar_global;
+  ocultarHugo = !!data.ocultar_hugo;
+}
+
+async function borrarTodo() {
+  const conf = prompt('Esto borra TODOS los fichajes y no se puede deshacer.\nEscribe BORRAR para confirmar:');
+  if (conf !== "BORRAR") { if (conf!==null) alert("Cancelado: no escribiste BORRAR."); return; }
+  const { error } = await sb.from("fichajes").delete().eq("codigo", codigo);
+  if (error) { alert("Error al borrar: " + error.message); return; }
+  historial = []; diasAbiertos.clear();
+  alert("Historial borrado.");
+  renderApp();
 }
 
 async function cargar() {
@@ -441,8 +567,8 @@ async function cargar() {
   // recuperar fichaje activo local
   try { const a = localStorage.getItem(LKEY+"_activa"); activa = a?JSON.parse(a):null; } catch(e){ activa=null; }
   tarifa = parseFloat(localStorage.getItem(LKEY+"_tarifa")) || TARIFA_DEFECTO;
-  // tarifa compartida (la fija Edgar, la ve Hugo)
-  try { const tc = await leerTarifa(); if (tc != null) { tarifa = tc; localStorage.setItem(LKEY+"_tarifa", tc); } } catch(e){}
+  // ajustes compartidos (tarifa + visibilidad de precios)
+  try { await leerAjustes(); } catch(e){}
 
   const { data, error } = await sb.from("fichajes").select("*").eq("codigo", codigo).order("inicio",{ascending:false});
   if (error) {
