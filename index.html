@@ -104,12 +104,12 @@
   /* Fila total + € */
   .totrow { display: flex; gap: 12px; margin-bottom: 22px; }
   .tot { flex: 1; background: var(--caja); border-radius: 16px; padding: 15px 16px;
-         display: flex; align-items: baseline; justify-content: space-between; }
-  .tot .n { font-family: 'Ndot'; font-size: 24px; letter-spacing: 1px; color: var(--tinta); }
-  .tot.accent .n { color: var(--rojo); }
-  .tot .l { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gris); }
-  .tot.dim { opacity: .55; }
-  .tot.dim .n { color: var(--gris); }
+         display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .tot .l { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--tinta); }
+  .tot .n { font-family: 'Ndot'; font-size: 26px; letter-spacing: 1px; color: var(--tinta); line-height: 1; }
+  .tot .sub { font-family: 'Ndot'; font-size: 13px; letter-spacing: 1px; color: var(--tinta); }
+  /* Pendiente: todo rojo */
+  .tot.pend .l, .tot.pend .n, .tot.pend .sub { color: var(--rojo); }
   /* Pagos */
   .pbadge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
             border-radius: 50%; border: 1.5px solid var(--tinta); color: var(--tinta);
@@ -162,6 +162,27 @@
   .hist-head { display: flex; justify-content: space-between; align-items: center;
                margin-bottom: 12px; font-size: 12px; font-weight: 700; color: var(--tinta); text-transform: uppercase; letter-spacing: 2px; }
   .hist-actions { display: flex; gap: 8px; }
+  /* Tabs de filtro */
+  .tabs { display: flex; gap: 3px; background: var(--gris-claro); border-radius: 10px; padding: 3px; }
+  .tab { border: none; background: none; color: var(--gris); font-size: 10px; font-weight: 700;
+         text-transform: uppercase; letter-spacing: 1px; padding: 6px 10px; border-radius: 7px; cursor: pointer; font-family: 'NType'; transition: background .15s, color .15s; }
+  .tab.on { background: var(--caja); color: var(--tinta); }
+  /* Modal de opciones */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 50;
+                    display: flex; align-items: flex-end; justify-content: center; animation: fadeUp .18s ease-out; }
+  @media (min-width: 700px){ .modal-backdrop { align-items: center; } }
+  .modal { width: 100%; max-width: 400px; background: var(--fondo); border-radius: 22px 22px 0 0;
+           padding: 20px 18px calc(24px + env(safe-area-inset-bottom)); }
+  @media (min-width: 700px){ .modal { border-radius: 20px; margin: 0 16px; } }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+                font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--tinta); }
+  .modal-x { background: var(--caja); border: none; color: var(--gris); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 14px; }
+  .modal-item { width: 100%; background: var(--caja); border: none; border-radius: 14px; padding: 16px;
+                display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+                font-size: 15px; font-weight: 600; color: var(--tinta); cursor: pointer; font-family: 'NType'; }
+  .modal-arrow { color: var(--gris); font-size: 18px; }
+  .modal-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gris); margin: 14px 0 8px; }
+  .modal-tabs { background: var(--caja); }
   .refresh { background: none; border: 1px solid var(--gris-claro); border-radius: 20px;
              padding: 7px 14px; font-size: 11px; color: var(--tinta); cursor: pointer; font-weight: 700;
              text-transform: uppercase; letter-spacing: 1px; transition: border-color .15s; font-family: 'NType'; }
@@ -307,6 +328,8 @@ let tema = localStorage.getItem(LKEY+"_tema") || "dark";
 let graphRango = "semana"; // "semana" | "mes"
 let modoSel = false; // modo selección de pagos (admin)
 let diasSel = new Set(); // claves de día seleccionadas para pagar
+let filtro = "todo"; // "todo" | "pag" | "pend"
+let modalOpen = false;
 function aplicarTema(){ document.documentElement.setAttribute("data-theme", tema); }
 function toggleTema(){ tema = (tema==="dark"?"light":"dark"); localStorage.setItem(LKEY+"_tema", tema); aplicarTema(); renderApp(); }
 aplicarTema();
@@ -520,11 +543,11 @@ function renderApp() {
     </div>
     <div class="totrow">
       ${vp?`
-        <div class="tot"><span class="n">${Math.round(hPend*tarifa)}€</span><span class="l">Pendiente · ${hPend.toFixed(1)}h</span></div>
-        <div class="tot dim"><span class="n">${Math.round(hPag*tarifa)}€</span><span class="l">Pagado · ${hPag.toFixed(1)}h</span></div>
+        <div class="tot pend"><span class="l">Pendiente</span><span class="n">${Math.round(hPend*tarifa)}€</span><span class="sub">${hPend.toFixed(1)}h</span></div>
+        <div class="tot"><span class="l">Pagado</span><span class="n">${Math.round(hPag*tarifa)}€</span><span class="sub">${hPag.toFixed(1)}h</span></div>
       `:`
-        <div class="tot"><span class="n">${hPend.toFixed(1)}h</span><span class="l">Pendiente</span></div>
-        <div class="tot dim"><span class="n">${hPag.toFixed(1)}h</span><span class="l">Pagado</span></div>
+        <div class="tot pend"><span class="l">Pendiente</span><span class="n">${hPend.toFixed(1)}h</span></div>
+        <div class="tot"><span class="l">Pagado</span><span class="n">${hPag.toFixed(1)}h</span></div>
       `}
     </div>
     <div class="hist-head">
@@ -532,9 +555,13 @@ function renderApp() {
       <div class="hist-actions">
         ${modoSel
           ? `<button class="refresh" id="selCancel">Cancelar</button>`
-          : `${esAdmin()?`<button class="refresh" id="selBtn">Pagos</button>`:""}
-             ${esAdmin()?`<button class="refresh" id="addBtn">+ Añadir</button>`:""}
-             <button class="refresh" id="refreshBtn">↻ Actualizar</button>`}
+          : (esAdmin()
+              ? `<button class="refresh" id="opcionesBtn">Opciones</button>`
+              : `<div class="tabs" id="tabs">
+                   <button class="tab ${filtro==='todo'?'on':''}" data-filtro="todo">Todo</button>
+                   <button class="tab ${filtro==='pend'?'on':''}" data-filtro="pend">Pend</button>
+                   <button class="tab ${filtro==='pag'?'on':''}" data-filtro="pag">Pag</button>
+                 </div>`)}
       </div>
     </div>
     <div class="list" id="list"></div>
@@ -542,7 +569,8 @@ function renderApp() {
     <div class="foot">
       <span class="foot-user">${escapeHtml(persona||"")}${esAdmin()?' <span class="badge">admin</span>':''}</span>
       <a id="salir" class="foot-salir">Salir</a>
-    </div>`;
+    </div>
+    ${modalOpen?renderModalOpciones():""}`;
 
   $("mainBtn").onclick = onMain;
   if ($("refreshBtn")) $("refreshBtn").onclick = cargar;
@@ -555,6 +583,13 @@ function renderApp() {
   if ($("ajustesBtn")) $("ajustesBtn").onclick = renderAjustes;
   if ($("selBtn")) $("selBtn").onclick = ()=>{ modoSel=true; diasSel.clear(); renderApp(); };
   if ($("selCancel")) $("selCancel").onclick = ()=>{ modoSel=false; diasSel.clear(); renderApp(); };
+  if ($("opcionesBtn")) $("opcionesBtn").onclick = ()=>{ modalOpen=true; renderApp(); };
+  $$("[data-filtro]").forEach(b=>b.onclick=()=>{ filtro=b.dataset.filtro; modalOpen=false; renderApp(); });
+  // acciones dentro del modal de opciones
+  if ($("modalPagos")) $("modalPagos").onclick = ()=>{ modalOpen=false; modoSel=true; diasSel.clear(); renderApp(); };
+  if ($("modalAdd")) $("modalAdd").onclick = ()=>{ modalOpen=false; renderApp(); setTimeout(abrirManual,0); };
+  if ($("modalClose")) $("modalClose").onclick = ()=>{ modalOpen=false; renderApp(); };
+  if ($("modalBackdrop")) $("modalBackdrop").onclick = (e)=>{ if(e.target===$("modalBackdrop")){ modalOpen=false; renderApp(); } };
   $$("[data-rango]").forEach(b=>b.onclick=()=>{
     if (b.dataset.rango === graphRango) return;
     const dir = b.dataset.rango === "mes" ? 1 : -1; // mes entra desde la derecha, semana desde la izquierda
@@ -593,6 +628,26 @@ function actualizarGrafico(dir) {
   const lab = $("glabels");
   lab.className = "graph-labels" + (g.sparse ? " sparse" : "");
   lab.innerHTML = g.labels.map(l=>`<span>${l}</span>`).join("");
+}
+
+// Modal de opciones (admin)
+function renderModalOpciones() {
+  return `<div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <span>Opciones</span>
+        <button class="modal-x" id="modalClose">✕</button>
+      </div>
+      <button class="modal-item" id="modalPagos"><span>Marcar pagos</span><span class="modal-arrow">›</span></button>
+      <button class="modal-item" id="modalAdd"><span>Añadir fichaje</span><span class="modal-arrow">›</span></button>
+      <div class="modal-label">Mostrar</div>
+      <div class="tabs modal-tabs">
+        <button class="tab ${filtro==='todo'?'on':''}" data-filtro="todo">Todo</button>
+        <button class="tab ${filtro==='pend'?'on':''}" data-filtro="pend">Pendiente</button>
+        <button class="tab ${filtro==='pag'?'on':''}" data-filtro="pag">Pagado</button>
+      </div>
+    </div>
+  </div>`;
 }
 
 // Barra inferior del modo selección de pagos
@@ -656,6 +711,14 @@ function renderAjustes() {
     </div>
 
     <div class="set-group">
+      <div class="set-label">Datos</div>
+      <div class="set-row">
+        <div><div class="set-row-t">Sincronizar</div><div class="set-row-s">Trae los últimos fichajes desde la nube</div></div>
+        <button class="pill" id="syncBtn">Actualizar</button>
+      </div>
+    </div>
+
+    <div class="set-group">
       <div class="set-label">Liquidación</div>
       <div class="set-row">
         <div><div class="set-row-t">Resumen para pagar</div><div class="set-row-s">Total, desglose por semanas y por fase</div></div>
@@ -680,6 +743,7 @@ function renderAjustes() {
   $("tglGlobal").onclick = async ()=>{ ocultarGlobal = !ocultarGlobal; await guardarAjustes(); renderAjustes(); };
   $("tglHugo").onclick = async ()=>{ ocultarHugo = !ocultarHugo; await guardarAjustes(); renderAjustes(); };
   $("resumenPago").onclick = generarResumenPago;
+  $("syncBtn").onclick = async ()=>{ await cargar(); };
   $("borrarTodo").onclick = borrarTodo;
 }
 
@@ -739,10 +803,20 @@ function renderList() {
   if (historial.length === 0) { list.innerHTML = '<div class="empty">Aún no hay fichajes. Dale a Empezar.</div>'; return; }
   const ahora = Date.now();
 
-  // Agrupar por día (historial ya viene ordenado desc por inicio)
+  // Filtro (no aplica en modo selección)
+  let fuente = historial;
+  if (!modoSel && filtro !== "todo") {
+    fuente = historial.filter(s => filtro==="pag" ? s.pagado : !s.pagado);
+  }
+  if (fuente.length === 0) {
+    list.innerHTML = `<div class="empty">${filtro==="pag"?"Nada pagado todavía.":"Nada pendiente. ¡Todo pagado!"}</div>`;
+    return;
+  }
+
+  // Agrupar por día (ya viene ordenado desc por inicio)
   const dias = [];
   const idx = {};
-  historial.forEach(s => {
+  fuente.forEach(s => {
     const k = claveDia(s.inicio);
     if (idx[k]===undefined){ idx[k]=dias.length; dias.push({ k, ts:s.inicio, items:[] }); }
     dias[idx[k]].items.push(s);
@@ -881,9 +955,9 @@ function abrirManual() {
   const ahora = new Date(); const hace1h = new Date(Date.now()-3600000);
   const box = document.createElement("div");
   box.className = "dia open manual-box";
-  box.innerHTML = `<div style="padding:0 16px">
-    <div class="edit-box">
-      <div class="set-label" style="margin-bottom:10px">Nuevo fichaje manual</div>
+  box.innerHTML = `<div style="padding:18px 16px">
+    <div class="edit-box" style="padding:0">
+      <div class="set-label" style="margin-bottom:12px">Nuevo fichaje manual</div>
       <label>Nota</label>
       <input class="edit-field" id="man-nota" placeholder="Qué se hizo">
       <label>Categoría</label>
