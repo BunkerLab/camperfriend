@@ -113,8 +113,8 @@
   /* Pagos */
   .pbadge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
             border-radius: 50%; border: 1.5px solid var(--tinta); color: var(--tinta);
-            font-family: 'Ndot'; font-size: 12px; flex-shrink: 0; }
-  .pbadge.sm { width: 18px; height: 18px; font-size: 10px; vertical-align: middle; }
+            font-family: 'NType'; font-weight: 700; font-size: 11px; line-height: 1; flex-shrink: 0; }
+  .pbadge.sm { width: 18px; height: 18px; font-size: 9px; }
   .item.paid { opacity: .45; }
   .check { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--gris-claro); flex-shrink: 0; transition: .15s; }
   .check.on { background: var(--rojo); border-color: var(--rojo); position: relative; }
@@ -544,7 +544,7 @@ function renderApp() {
     <div class="totrow">
       ${vp?`
         <div class="tot pend"><span class="l">Pendiente</span><span class="n">${Math.round(hPend*tarifa)}€</span><span class="sub">${hPend.toFixed(1)}h</span></div>
-        <div class="tot"><span class="l">Pagado</span><span class="n">${Math.round(hPag*tarifa)}€</span><span class="sub">${hPag.toFixed(1)}h</span></div>
+        <div class="tot"><span class="l">Pagado</span><span class="n">${Math.round(hPag*tarifa)}€</span><span class="sub">${hPag.toFixed(1)}h · ${tarifa}€/h</span></div>
       `:`
         <div class="tot pend"><span class="l">Pendiente</span><span class="n">${hPend.toFixed(1)}h</span></div>
         <div class="tot"><span class="l">Pagado</span><span class="n">${hPag.toFixed(1)}h</span></div>
@@ -855,7 +855,6 @@ function renderList() {
             ${s.categoria?`<div class="item-tags"><span class="tag">${escapeHtml(s.categoria)}</span></div>`:""}
           </div>
           <div class="item-right">
-            ${s.pagado?`<span class="pbadge" title="Pagado">P</span>`:""}
             ${verPrecios()?`<span class="item-euro">${euro}€</span>`:""}
             ${editable?`<button class="edit-icon" data-edit="${s.id}" title="Editar">${LAPIZ}</button>`:""}
           </div>
@@ -877,8 +876,8 @@ function renderList() {
     }
     return `<div class="dia ${abierto?'open':''}">
       <button class="dia-head" data-dia="${dia.k}">
-        <span class="dia-fecha">${tituloDia(dia.ts)}${diaPagado?' <span class="pbadge sm">P</span>':''}</span>
-        <span class="dia-tot">${h.toFixed(1)}h${verPrecios()?` · ${Math.round(h*tarifa)}€`:""} <span class="chev">›</span></span>
+        <span class="dia-fecha">${tituloDia(dia.ts)}</span>
+        <span class="dia-tot">${h.toFixed(1)}h${verPrecios()?` · ${Math.round(h*tarifa)}€`:""}${diaPagado?' <span class="pbadge sm">P</span>':''} <span class="chev">›</span></span>
       </button>
       <div class="dia-body"><div class="dia-inner">${filas}</div></div>
     </div>`;
