@@ -365,13 +365,29 @@ function dotGraph(valores, max, filas){
   const W = cols*step, H = filas*step;
   let svg = `<svg width="100%" height="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">`;
   for(let g=0; g<grupos; g++){
-    const enc = Math.max(0, Math.round((Math.min(valores[g],max)/max)*filas));
     const base = g*cellCols + Math.floor((cellCols - subcols)/2); // centrar barra en la celda
-    for(let sc=0; sc<subcols; sc++){
-      for(let f=0; f<filas; f++){
-        const on = f<enc;
-        const cx = (base+sc)*step + step/2, cy = H-(f*step+step/2);
-        svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="currentColor" opacity="${on?1:0.14}"/>`;
+    if (subcols === 4) {
+      // cada fila = 1 hora, cada subcolumna = 1 cuarto de hora.
+      // se encienden de abajo a arriba y, dentro de la fila superior parcial, de izquierda a derecha.
+      const frac = Math.min(valores[g], max) / max;      // 0..1 respecto al máximo
+      const totalCuartos = Math.round(frac * filas * 4); // cuartos encendidos en total
+      for(let sc=0; sc<subcols; sc++){
+        for(let f=0; f<filas; f++){
+          // índice del cuarto en orden de llenado (fila de abajo primero, izquierda primero)
+          const idx = f*4 + sc;
+          const on = idx < totalCuartos;
+          const cx = (base+sc)*step + step/2, cy = H-(f*step+step/2);
+          svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="currentColor" opacity="${on?1:0.14}"/>`;
+        }
+      }
+    } else {
+      const enc = Math.max(0, Math.round((Math.min(valores[g],max)/max)*filas));
+      for(let sc=0; sc<subcols; sc++){
+        for(let f=0; f<filas; f++){
+          const on = f<enc;
+          const cx = (base+sc)*step + step/2, cy = H-(f*step+step/2);
+          svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="currentColor" opacity="${on?1:0.14}"/>`;
+        }
       }
     }
   }
