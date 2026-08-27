@@ -108,6 +108,27 @@
   .tot .n { font-family: 'Ndot'; font-size: 24px; letter-spacing: 1px; color: var(--tinta); }
   .tot.accent .n { color: var(--rojo); }
   .tot .l { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gris); }
+  .tot.dim { opacity: .55; }
+  .tot.dim .n { color: var(--gris); }
+  /* Pagos */
+  .pbadge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+            border-radius: 50%; border: 1.5px solid var(--tinta); color: var(--tinta);
+            font-family: 'Ndot'; font-size: 12px; flex-shrink: 0; }
+  .pbadge.sm { width: 18px; height: 18px; font-size: 10px; vertical-align: middle; }
+  .item.paid { opacity: .45; }
+  .check { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--gris-claro); flex-shrink: 0; transition: .15s; }
+  .check.on { background: var(--rojo); border-color: var(--rojo); position: relative; }
+  .check.on:after { content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; }
+  .dia.selmode .dia-head { cursor: pointer; }
+  .dia.selmode.selected { outline: 2px solid var(--rojo); }
+  .dia-left { display: flex; align-items: center; gap: 12px; }
+  .selbar { position: sticky; bottom: 12px; background: var(--rojo); border-radius: 14px;
+            padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
+            gap: 10px; margin: 12px 0; box-shadow: 0 6px 20px rgba(215,25,33,.4); }
+  .selbar-txt { font-size: 13px; font-weight: 700; color: #fff; }
+  .selbar-act { background: #fff; color: var(--rojo); border: none; border-radius: 10px;
+                padding: 10px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase;
+                letter-spacing: 1px; cursor: pointer; }
   input.nota, input.edit-field {
     width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--gris-claro);
     font-size: 15px; margin-bottom: 12px; outline: none; font-family: inherit; color: var(--tinta);
@@ -284,6 +305,8 @@ let diasAbiertos = new Set(); // claves de día abiertas en el acordeón
 let catSel = ""; // categoría elegida para el próximo fichaje
 let tema = localStorage.getItem(LKEY+"_tema") || "dark";
 let graphRango = "semana"; // "semana" | "mes"
+let modoSel = false; // modo selección de pagos (admin)
+let diasSel = new Set(); // claves de día seleccionadas para pagar
 function aplicarTema(){ document.documentElement.setAttribute("data-theme", tema); }
 function toggleTema(){ tema = (tema==="dark"?"light":"dark"); localStorage.setItem(LKEY+"_tema", tema); aplicarTema(); renderApp(); }
 aplicarTema();
@@ -448,6 +471,8 @@ function fmtClock(ms){
 function renderApp() {
   const totMs = historial.reduce((a,s)=>a+(s.fin-s.inicio),0);
   const totH = totMs/3600000;
+  let hPag=0, hPend=0;
+  historial.forEach(s=>{ const d=(s.fin-s.inicio)/3600000; if(s.pagado) hPag+=d; else hPend+=d; });
   const vp = verPrecios();
   const sinCerrar = activa && (Date.now()-activa.inicio) > HORAS_SIN_CERRAR*3600000;
   const g = datosGrafico();
@@ -494,24 +519,33 @@ function renderApp() {
       <div class="graph-labels ${g.sparse?'sparse':''}" id="glabels">${g.labels.map(l=>`<span>${l}</span>`).join("")}</div>
     </div>
     <div class="totrow">
-      <div class="tot"><span class="n">${totH.toFixed(1)}h</span><span class="l">Total</span></div>
-      ${vp?`<div class="tot accent"><span class="n">${Math.round(totH*tarifa)}€</span><span class="l">${tarifa}€/h</span></div>`:""}
+      ${vp?`
+        <div class="tot"><span class="n">${Math.round(hPend*tarifa)}€</span><span class="l">Pendiente · ${hPend.toFixed(1)}h</span></div>
+        <div class="tot dim"><span class="n">${Math.round(hPag*tarifa)}€</span><span class="l">Pagado · ${hPag.toFixed(1)}h</span></div>
+      `:`
+        <div class="tot"><span class="n">${hPend.toFixed(1)}h</span><span class="l">Pendiente</span></div>
+        <div class="tot dim"><span class="n">${hPag.toFixed(1)}h</span><span class="l">Pagado</span></div>
+      `}
     </div>
     <div class="hist-head">
-      <span>Historial</span>
+      <span>${modoSel?"Marca días pagados":"Historial"}</span>
       <div class="hist-actions">
-        ${esAdmin()?`<button class="refresh" id="addBtn">+ Añadir</button>`:""}
-        <button class="refresh" id="refreshBtn">↻ Actualizar</button>
+        ${modoSel
+          ? `<button class="refresh" id="selCancel">Cancelar</button>`
+          : `${esAdmin()?`<button class="refresh" id="selBtn">Pagos</button>`:""}
+             ${esAdmin()?`<button class="refresh" id="addBtn">+ Añadir</button>`:""}
+             <button class="refresh" id="refreshBtn">↻ Actualizar</button>`}
       </div>
     </div>
     <div class="list" id="list"></div>
+    ${modoSel?`<div class="selbar" id="selbar"></div>`:""}
     <div class="foot">
       <span class="foot-user">${escapeHtml(persona||"")}${esAdmin()?' <span class="badge">admin</span>':''}</span>
       <a id="salir" class="foot-salir">Salir</a>
     </div>`;
 
   $("mainBtn").onclick = onMain;
-  $("refreshBtn").onclick = cargar;
+  if ($("refreshBtn")) $("refreshBtn").onclick = cargar;
   $("temaBtn").onclick = toggleTema;
   if ($("addBtn")) $("addBtn").onclick = ()=>abrirManual();
   $("salir").onclick = () => {
@@ -519,6 +553,8 @@ function renderApp() {
     codigo=null; persona=null; renderGate();
   };
   if ($("ajustesBtn")) $("ajustesBtn").onclick = renderAjustes;
+  if ($("selBtn")) $("selBtn").onclick = ()=>{ modoSel=true; diasSel.clear(); renderApp(); };
+  if ($("selCancel")) $("selCancel").onclick = ()=>{ modoSel=false; diasSel.clear(); renderApp(); };
   $$("[data-rango]").forEach(b=>b.onclick=()=>{
     if (b.dataset.rango === graphRango) return;
     const dir = b.dataset.rango === "mes" ? 1 : -1; // mes entra desde la derecha, semana desde la izquierda
@@ -532,6 +568,7 @@ function renderApp() {
   if ($("cerrarReal")) $("cerrarReal").onclick = onMain;
   if ($("descartar")) $("descartar").onclick = ()=>{ activa=null; localStorage.removeItem(LKEY+"_activa"); renderApp(); };
   renderList();
+  if (modoSel) actualizarSelbar();
   if (activa && !timer) timer = setInterval(()=>{ if(activa) $("clockBig").textContent=fmtClock(Date.now()-activa.inicio); }, 1000);
   if (!activa && timer) { clearInterval(timer); timer=null; }
 }
@@ -556,6 +593,29 @@ function actualizarGrafico(dir) {
   const lab = $("glabels");
   lab.className = "graph-labels" + (g.sparse ? " sparse" : "");
   lab.innerHTML = g.labels.map(l=>`<span>${l}</span>`).join("");
+}
+
+// Barra inferior del modo selección de pagos
+function actualizarSelbar() {
+  const bar = $("selbar"); if (!bar) return;
+  const items = historial.filter(s=>diasSel.has(claveDia(s.inicio)));
+  const n = items.length;
+  const h = items.reduce((a,s)=>a+(s.fin-s.inicio),0)/3600000;
+  const eur = Math.round(h*tarifa);
+  // ¿todos los seleccionados ya están pagados? entonces la acción es "marcar pendiente"
+  const todosPagados = n>0 && items.every(s=>s.pagado);
+  if (n===0) {
+    bar.innerHTML = `<span class="selbar-txt">Toca los días a marcar</span>`;
+    return;
+  }
+  bar.innerHTML = `<span class="selbar-txt">${diasSel.size} día(s) · ${h.toFixed(1)}h${verPrecios()?` · ${eur}€`:""}</span>
+    <button class="selbar-act" id="doPagar">${todosPagados?"Marcar pendiente":"Marcar pagado"}</button>`;
+  $("doPagar").onclick = async ()=>{
+    const ids = items.map(s=>s.id);
+    await sbSetPagado(ids, !todosPagados);
+    modoSel=false; diasSel.clear();
+    await cargar();
+  };
 }
 
 // ── Pantalla de ajustes (solo admin) ───────────────────────────
@@ -646,6 +706,13 @@ function generarResumenPago() {
   t += "\nPor fase:\n";
   Object.keys(cat).forEach(k=>{ t += `• ${k}: ${cat[k].toFixed(1)}h\n`; });
 
+  // Desglose pagado / pendiente
+  let hPag=0, hPend=0;
+  historial.forEach(s=>{ const d=(s.fin-s.inicio)/3600000; if(s.pagado) hPag+=d; else hPend+=d; });
+  t += "\nPagos:\n";
+  t += `• Pendiente: ${hPend.toFixed(1)}h${verPrecios()?` · ${Math.round(hPend*tarifa)}€`:""}\n`;
+  t += `• Pagado: ${hPag.toFixed(1)}h${verPrecios()?` · ${Math.round(hPag*tarifa)}€`:""}\n`;
+
   // Abrir WhatsApp con el texto; si el usuario cancela, ofrecer copiar
   if (confirm("Se abrirá WhatsApp con el resumen.\n\nAceptar = WhatsApp · Cancelar = copiar al portapapeles")) {
     window.open("https://wa.me/?text="+encodeURIComponent(t), "_blank");
@@ -706,7 +773,7 @@ function renderList() {
             </div>
           </div></div>`;
       }
-      return `<div class="item">
+      return `<div class="item ${s.pagado?'paid':''}">
         <div class="item-top">
           <div class="item-main">
             ${s.nota?`<div class="item-nota">${escapeHtml(s.nota)}</div>`:`<div class="item-nota item-sin">Sin nota</div>`}
@@ -714,21 +781,43 @@ function renderList() {
             ${s.categoria?`<div class="item-tags"><span class="tag">${escapeHtml(s.categoria)}</span></div>`:""}
           </div>
           <div class="item-right">
+            ${s.pagado?`<span class="pbadge" title="Pagado">P</span>`:""}
             ${verPrecios()?`<span class="item-euro">${euro}€</span>`:""}
             ${editable?`<button class="edit-icon" data-edit="${s.id}" title="Editar">${LAPIZ}</button>`:""}
           </div>
         </div>
       </div>`;
     }).join("");
+    const diaPagado = dia.items.every(s=>s.pagado);
+    const diaSelec = diasSel.has(dia.k);
+    if (modoSel) {
+      return `<div class="dia selmode ${diaSelec?'selected':''}">
+        <button class="dia-head" data-seldia="${dia.k}">
+          <span class="dia-left">
+            <span class="check ${diaSelec?'on':''}"></span>
+            <span class="dia-fecha">${tituloDia(dia.ts)}</span>
+          </span>
+          <span class="dia-tot">${h.toFixed(1)}h${verPrecios()?` · ${Math.round(h*tarifa)}€`:""}${diaPagado?' <span class="pbadge">P</span>':''}</span>
+        </button>
+      </div>`;
+    }
     return `<div class="dia ${abierto?'open':''}">
       <button class="dia-head" data-dia="${dia.k}">
-        <span class="dia-fecha">${tituloDia(dia.ts)}</span>
+        <span class="dia-fecha">${tituloDia(dia.ts)}${diaPagado?' <span class="pbadge sm">P</span>':''}</span>
         <span class="dia-tot">${h.toFixed(1)}h${verPrecios()?` · ${Math.round(h*tarifa)}€`:""} <span class="chev">›</span></span>
       </button>
       <div class="dia-body"><div class="dia-inner">${filas}</div></div>
     </div>`;
   }).join("");
 
+  list.querySelectorAll("[data-seldia]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.seldia;
+    if(diasSel.has(k)) diasSel.delete(k); else diasSel.add(k);
+    const el=b.closest(".dia");
+    el.classList.toggle("selected", diasSel.has(k));
+    el.querySelector(".check").classList.toggle("on", diasSel.has(k));
+    actualizarSelbar();
+  });
   list.querySelectorAll("[data-dia]").forEach(b=>b.onclick=()=>{
     const k=b.dataset.dia;
     const diaEl = b.closest(".dia");
@@ -857,6 +946,10 @@ async function sbDelete(id) {
   const { error } = await sb.from("fichajes").delete().eq("id", id).eq("codigo", codigo);
   if (error) alert("Error al borrar: " + error.message);
 }
+async function sbSetPagado(ids, valor) {
+  const { error } = await sb.from("fichajes").update({ pagado: valor }).in("id", ids).eq("codigo", codigo);
+  if (error) alert("Error al actualizar pagos: " + error.message);
+}
 
 async function guardarTarifa(t) { return guardarAjustes(); }
 async function guardarAjustes() {
@@ -899,7 +992,7 @@ async function cargar() {
     else { renderGate("Código no válido o sin datos: " + error.message); }
     return;
   }
-  historial = (data||[]).map(r => ({ id: r.id, inicio: new Date(r.inicio).getTime(), fin: new Date(r.fin).getTime(), nota: r.nota, categoria: r.categoria||"" }));
+  historial = (data||[]).map(r => ({ id: r.id, inicio: new Date(r.inicio).getTime(), fin: new Date(r.fin).getTime(), nota: r.nota, categoria: r.categoria||"", pagado: !!r.pagado }));
   renderApp();
 }
 
