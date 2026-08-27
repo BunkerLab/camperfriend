@@ -74,6 +74,10 @@
           display: flex; align-items: center; justify-content: center; transition: transform .08s; }
   .play:active { transform: scale(.94); }
   .bar.on .play { border-color: #fff; color: #fff; }
+  .play.disabled { opacity: .32; cursor: not-allowed; }
+  .play.disabled:active { transform: none; }
+  @keyframes shake { 10%,90%{transform:translateX(-1px)} 20%,80%{transform:translateX(2px)} 30%,50%,70%{transform:translateX(-4px)} 40%,60%{transform:translateX(4px)} }
+  .play.shake { animation: shake .4s; }
   /* Meta del fichaje activo */
   .active-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; padding: 0 4px; }
   .am-nota { font-size: 13px; color: var(--rojo); }
@@ -402,6 +406,8 @@ function dotGraph(valores, max, filas, patrones){
   return svg+'</svg>';
 }
 const fmtDur = (ms) => { const m = Math.floor(ms/60000); return `${Math.floor(m/60)}h ${String(m%60).padStart(2,"0")}m`; };
+// horas decimales -> "Xh Ym" (redondeo al minuto). Para mostrar tiempo de forma realista.
+const fmtH = (h) => { const m = Math.round(h*60); const hh=Math.floor(m/60), mm=m%60; return mm ? `${hh}h ${mm}m` : `${hh}h`; };
 const fmtHora = (ts) => new Date(ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
 const fmtFecha = (ts) => new Date(ts).toLocaleDateString("es-ES",{weekday:"short",day:"2-digit",month:"short"});
 const escapeHtml = (s="") => s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -578,14 +584,14 @@ function renderApp() {
         <div class="bar-lbl">${activa?`<span class="live"><span class="live-dot"></span>desde las ${fmtHora(activa.inicio)}</span>`:"Sin fichaje activo"}</div>
         <div class="bar-big ${activa?'':'off'}" id="clockBig">${activa?fmtClock(Date.now()-activa.inicio):"0:00"}</div>
       </div>
-      <button class="play" id="mainBtn" title="${activa?'Terminar':'Empezar'}">${activa?"■":"▶"}</button>
+      <button class="play ${!activa && !(catSel && (($("notaInput")?.value||"").trim())) ? 'disabled':''}" id="mainBtn" title="${activa?'Terminar':'Empezar'}">${activa?"■":"▶"}</button>
     </div>
     ${activa&&(activa.nota||activa.categoria)?`<div class="active-meta">
       ${activa.nota?`<span class="am-nota">“${escapeHtml(activa.nota)}”</span>`:""}
       ${activa.categoria?`<span class="clock-cat">${escapeHtml(activa.categoria)}</span>`:""}
     </div>`:""}
     ${!activa?`
-      <input class="nota" id="notaInput" placeholder="¿En qué vas a trabajar? (opcional)">
+      <input class="nota" id="notaInput" placeholder="¿En qué vas a trabajar?">
       <div class="cats-wrap"><div class="cats" id="cats">${CATEGORIAS.map(c=>`<button class="cat ${catSel===c?'sel':''}" data-cat="${c}">${c}</button>`).join("")}</div></div>
     `:""}
     <div class="graph-card">
@@ -601,11 +607,11 @@ function renderApp() {
     </div>
     <div class="totrow">
       ${vp?`
-        <div class="tot pend"><span class="l">Pendiente</span><span class="n">${Math.round(hPend*tarifa)}€</span><span class="sub">${hPend.toFixed(1)}h</span></div>
-        <div class="tot"><span class="l">Pagado</span><span class="n">${Math.round(hPag*tarifa)}€</span><span class="sub">${hPag.toFixed(1)}h · ${tarifa}€/h</span></div>
+        <div class="tot pend"><span class="l">Pendiente</span><span class="n">${Math.round(hPend*tarifa)}€</span><span class="sub">${fmtH(hPend)}</span></div>
+        <div class="tot"><span class="l">Pagado</span><span class="n">${Math.round(hPag*tarifa)}€</span><span class="sub">${fmtH(hPag)} · ${tarifa}€/h</span></div>
       `:`
-        <div class="tot pend"><span class="l">Pendiente</span><span class="n">${hPend.toFixed(1)}h</span></div>
-        <div class="tot"><span class="l">Pagado</span><span class="n">${hPag.toFixed(1)}h</span></div>
+        <div class="tot pend"><span class="l">Pendiente</span><span class="n">${fmtH(hPend)}</span></div>
+        <div class="tot"><span class="l">Pagado</span><span class="n">${fmtH(hPag)}</span></div>
       `}
     </div>
     <div class="hist-head">
@@ -631,6 +637,13 @@ function renderApp() {
     ${modalOpen?renderModalOpciones():""}`;
 
   $("mainBtn").onclick = onMain;
+  // valida en vivo que haya nota + categoría antes de permitir empezar
+  const validarInicio = () => {
+    if (activa) return; // si ya está fichando, el botón es "terminar" y siempre activo
+    const ok = catSel && (($("notaInput")?.value||"").trim().length>0);
+    $("mainBtn").classList.toggle("disabled", !ok);
+  };
+  if ($("notaInput")) $("notaInput").addEventListener("input", validarInicio);
   if ($("refreshBtn")) $("refreshBtn").onclick = cargar;
   $("temaBtn").onclick = toggleTema;
   if ($("addBtn")) $("addBtn").onclick = ()=>abrirManual();
@@ -657,6 +670,7 @@ function renderApp() {
   if ($("cats")) $$("[data-cat]").forEach(b=>b.onclick=()=>{
     catSel = (catSel===b.dataset.cat ? "" : b.dataset.cat);
     $$("#cats [data-cat]").forEach(x=>x.classList.toggle("sel", x.dataset.cat===catSel));
+    validarInicio();
   });
   if ($("cerrarReal")) $("cerrarReal").onclick = onMain;
   if ($("descartar")) $("descartar").onclick = ()=>{ activa=null; localStorage.removeItem(LKEY+"_activa"); renderApp(); };
@@ -721,7 +735,7 @@ function actualizarSelbar() {
     bar.innerHTML = `<span class="selbar-txt">Toca los días a marcar</span>`;
     return;
   }
-  bar.innerHTML = `<span class="selbar-txt">${diasSel.size} día(s) · ${h.toFixed(1)}h${verPrecios()?` · ${eur}€`:""}</span>
+  bar.innerHTML = `<span class="selbar-txt">${diasSel.size} día(s) · ${fmtH(h)}${verPrecios()?` · ${eur}€`:""}</span>
     <button class="selbar-act" id="doPagar">${todosPagados?"Marcar pendiente":"Marcar pagado"}</button>`;
   $("doPagar").onclick = async ()=>{
     const ids = items.map(s=>s.id);
@@ -821,19 +835,19 @@ function generarResumenPago() {
   historial.forEach(s=>{ const c=s.categoria||"Sin categoría"; cat[c]=(cat[c]||0)+(s.fin-s.inicio)/3600000; });
 
   let t = "🚐 Resumen horas camper\n\n";
-  t += `TOTAL: ${totH.toFixed(1)}h`;
+  t += `TOTAL: ${fmtH(totH)}`;
   if (verPrecios()) t += ` · ${Math.round(totH*tarifa)}€ (a ${tarifa}€/h)`;
   t += "\n\nPor semana (desde lunes):\n";
-  Object.keys(sem).forEach(k=>{ t += `• Sem ${k}: ${sem[k].toFixed(1)}h${verPrecios()?` · ${Math.round(sem[k]*tarifa)}€`:""}\n`; });
+  Object.keys(sem).forEach(k=>{ t += `• Sem ${k}: ${fmtH(sem[k])}${verPrecios()?` · ${Math.round(sem[k]*tarifa)}€`:""}\n`; });
   t += "\nPor fase:\n";
-  Object.keys(cat).forEach(k=>{ t += `• ${k}: ${cat[k].toFixed(1)}h\n`; });
+  Object.keys(cat).forEach(k=>{ t += `• ${k}: ${fmtH(cat[k])}\n`; });
 
   // Desglose pagado / pendiente
   let hPag=0, hPend=0;
   historial.forEach(s=>{ const d=(s.fin-s.inicio)/3600000; if(s.pagado) hPag+=d; else hPend+=d; });
   t += "\nPagos:\n";
-  t += `• Pendiente: ${hPend.toFixed(1)}h${verPrecios()?` · ${Math.round(hPend*tarifa)}€`:""}\n`;
-  t += `• Pagado: ${hPag.toFixed(1)}h${verPrecios()?` · ${Math.round(hPag*tarifa)}€`:""}\n`;
+  t += `• Pendiente: ${fmtH(hPend)}${verPrecios()?` · ${Math.round(hPend*tarifa)}€`:""}\n`;
+  t += `• Pagado: ${fmtH(hPag)}${verPrecios()?` · ${Math.round(hPag*tarifa)}€`:""}\n`;
 
   // Abrir WhatsApp con el texto; si el usuario cancela, ofrecer copiar
   if (confirm("Se abrirá WhatsApp con el resumen.\n\nAceptar = WhatsApp · Cancelar = copiar al portapapeles")) {
@@ -928,14 +942,14 @@ function renderList() {
             <span class="check ${diaSelec?'on':''}"></span>
             <span class="dia-fecha">${tituloDia(dia.ts)}</span>
           </span>
-          <span class="dia-tot">${h.toFixed(1)}h${verPrecios()?` · ${Math.round(h*tarifa)}€`:""}${diaPagado?' <span class="pbadge">P</span>':''}</span>
+          <span class="dia-tot">${fmtH(h)}${verPrecios()?` · ${Math.round(h*tarifa)}€`:""}${diaPagado?' <span class="pbadge">P</span>':''}</span>
         </button>
       </div>`;
     }
     return `<div class="dia ${abierto?'open':''}">
       <button class="dia-head" data-dia="${dia.k}">
         <span class="dia-fecha">${tituloDia(dia.ts)}</span>
-        <span class="dia-tot">${h.toFixed(1)}h${verPrecios()?` · ${Math.round(h*tarifa)}€`:""}${diaPagado?' <span class="pbadge sm">P</span>':''} <span class="chev">›</span></span>
+        <span class="dia-tot">${fmtH(h)}${verPrecios()?` · ${Math.round(h*tarifa)}€`:""}${diaPagado?' <span class="pbadge sm">P</span>':''} <span class="chev">›</span></span>
       </button>
       <div class="dia-body"><div class="dia-inner">${filas}</div></div>
     </div>`;
@@ -976,6 +990,12 @@ async function onMain() {
     await sbInsert(reg);
   } else {
     const nota = ($("notaInput")?.value || "").trim();
+    if (!nota || !catSel) {
+      // sacudir el botón para indicar que faltan campos
+      const b=$("mainBtn"); if(b){ b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake"); }
+      if (!nota && $("notaInput")) $("notaInput").focus();
+      return;
+    }
     activa = { inicio: Date.now(), nota, categoria: catSel };
     localStorage.setItem(LKEY+"_activa", JSON.stringify(activa));
     renderApp();
