@@ -408,6 +408,12 @@ function dotGraph(valores, max, filas, patrones){
 const fmtDur = (ms) => { const m = Math.floor(ms/60000); return `${Math.floor(m/60)}h ${String(m%60).padStart(2,"0")}m`; };
 // horas decimales -> "Xh Ym" (redondeo al minuto). Para mostrar tiempo de forma realista.
 const fmtH = (h) => { const m = Math.round(h*60); const hh=Math.floor(m/60), mm=m%60; return mm ? `${hh}h ${mm}m` : `${hh}h`; };
+// tarifa congelada de un fichaje (la suya propia; si es null, la global actual)
+const tarifaDe = (s) => (s && s.tarifa!=null) ? s.tarifa : tarifa;
+// importe en € de un fichaje, con su propia tarifa
+const importeDe = (s) => ((s.fin-s.inicio)/3600000) * tarifaDe(s);
+// suma de importes de una lista de fichajes (cada uno a su tarifa)
+const sumaImporte = (arr) => arr.reduce((a,s)=>a+importeDe(s),0);
 const fmtHora = (ts) => new Date(ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
 const fmtFecha = (ts) => new Date(ts).toLocaleDateString("es-ES",{weekday:"short",day:"2-digit",month:"short"});
 const escapeHtml = (s="") => s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -558,8 +564,8 @@ function fmtClock(ms){
 function renderApp() {
   const totMs = historial.reduce((a,s)=>a+(s.fin-s.inicio),0);
   const totH = totMs/3600000;
-  let hPag=0, hPend=0;
-  historial.forEach(s=>{ const d=(s.fin-s.inicio)/3600000; if(s.pagado) hPag+=d; else hPend+=d; });
+  let hPag=0, hPend=0, eurPag=0, eurPend=0;
+  historial.forEach(s=>{ const d=(s.fin-s.inicio)/3600000; if(s.pagado){ hPag+=d; eurPag+=importeDe(s); } else { hPend+=d; eurPend+=importeDe(s); } });
   const vp = verPrecios();
   const sinCerrar = activa && (Date.now()-activa.inicio) > HORAS_SIN_CERRAR*3600000;
   const g = datosGrafico();
@@ -606,13 +612,14 @@ function renderApp() {
       <div class="graph-labels ${g.sparse?'sparse':''}" id="glabels">${g.labels.map(l=>`<span>${l}</span>`).join("")}</div>
     </div>
     <div class="totrow">
-      ${vp?`
-        <div class="tot pend"><span class="l">Pendiente</span><span class="n">${Math.round(hPend*tarifa)}€</span><span class="sub">${fmtH(hPend)}</span></div>
-        <div class="tot"><span class="l">Pagado</span><span class="n">${Math.round(hPag*tarifa)}€</span><span class="sub">${fmtH(hPag)} · ${tarifa}€/h</span></div>
+      ${(()=>{ const tars=[...new Set(historial.map(s=>tarifaDe(s)))]; const subTar = tars.length===1 ? `${tars[0]}€/h` : "varias tarifas";
+        return vp?`
+        <div class="tot pend"><span class="l">Pendiente</span><span class="n">${Math.round(eurPend)}€</span><span class="sub">${fmtH(hPend)}</span></div>
+        <div class="tot"><span class="l">Pagado</span><span class="n">${Math.round(eurPag)}€</span><span class="sub">${fmtH(hPag)} · ${subTar}</span></div>
       `:`
         <div class="tot pend"><span class="l">Pendiente</span><span class="n">${fmtH(hPend)}</span></div>
         <div class="tot"><span class="l">Pagado</span><span class="n">${fmtH(hPag)}</span></div>
-      `}
+      `; })()}
     </div>
     <div class="hist-head">
       <span>${modoSel?"Marca días pagados":"Historial"}</span>
@@ -728,7 +735,7 @@ function actualizarSelbar() {
   const items = historial.filter(s=>diasSel.has(claveDia(s.inicio)));
   const n = items.length;
   const h = items.reduce((a,s)=>a+(s.fin-s.inicio),0)/3600000;
-  const eur = Math.round(h*tarifa);
+  const eur = Math.round(sumaImporte(items));
   // ¿todos los seleccionados ya están pagados? entonces la acción es "marcar pendiente"
   const todosPagados = n>0 && items.every(s=>s.pagado);
   if (n===0) {
@@ -822,13 +829,16 @@ function renderAjustes() {
 function generarResumenPago() {
   if (historial.length === 0) { alert("No hay fichajes todavía."); return; }
   const totH = historial.reduce((a,s)=>a+(s.fin-s.inicio),0)/3600000;
+  const totEur = sumaImporte(historial);
+  const tars = [...new Set(historial.map(s=>tarifaDe(s)))];
   // por semana (clave ISO aproximada: año-Wnº)
   const sem = {};
   historial.forEach(s=>{
     const d=new Date(s.inicio); const dow=(d.getDay()+6)%7;
     const lun=new Date(d); lun.setHours(0,0,0,0); lun.setDate(lun.getDate()-dow);
     const k=lun.toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit"});
-    sem[k]=(sem[k]||0)+(s.fin-s.inicio)/3600000;
+    if(!sem[k]) sem[k]={h:0,eur:0};
+    sem[k].h+=(s.fin-s.inicio)/3600000; sem[k].eur+=importeDe(s);
   });
   // por categoría
   const cat={};
@@ -836,18 +846,18 @@ function generarResumenPago() {
 
   let t = "🚐 Resumen horas camper\n\n";
   t += `TOTAL: ${fmtH(totH)}`;
-  if (verPrecios()) t += ` · ${Math.round(totH*tarifa)}€ (a ${tarifa}€/h)`;
+  if (verPrecios()) t += ` · ${Math.round(totEur)}€${tars.length===1?` (a ${tars[0]}€/h)`:" (varias tarifas)"}`;
   t += "\n\nPor semana (desde lunes):\n";
-  Object.keys(sem).forEach(k=>{ t += `• Sem ${k}: ${fmtH(sem[k])}${verPrecios()?` · ${Math.round(sem[k]*tarifa)}€`:""}\n`; });
+  Object.keys(sem).forEach(k=>{ t += `• Sem ${k}: ${fmtH(sem[k].h)}${verPrecios()?` · ${Math.round(sem[k].eur)}€`:""}\n`; });
   t += "\nPor fase:\n";
   Object.keys(cat).forEach(k=>{ t += `• ${k}: ${fmtH(cat[k])}\n`; });
 
   // Desglose pagado / pendiente
-  let hPag=0, hPend=0;
-  historial.forEach(s=>{ const d=(s.fin-s.inicio)/3600000; if(s.pagado) hPag+=d; else hPend+=d; });
+  let hPag=0, hPend=0, eurPag=0, eurPend=0;
+  historial.forEach(s=>{ const d=(s.fin-s.inicio)/3600000; if(s.pagado){ hPag+=d; eurPag+=importeDe(s); } else { hPend+=d; eurPend+=importeDe(s); } });
   t += "\nPagos:\n";
-  t += `• Pendiente: ${fmtH(hPend)}${verPrecios()?` · ${Math.round(hPend*tarifa)}€`:""}\n`;
-  t += `• Pagado: ${fmtH(hPag)}${verPrecios()?` · ${Math.round(hPag*tarifa)}€`:""}\n`;
+  t += `• Pendiente: ${fmtH(hPend)}${verPrecios()?` · ${Math.round(eurPend)}€`:""}\n`;
+  t += `• Pagado: ${fmtH(hPag)}${verPrecios()?` · ${Math.round(eurPag)}€`:""}\n`;
 
   // Abrir WhatsApp con el texto; si el usuario cancela, ofrecer copiar
   if (confirm("Se abrirá WhatsApp con el resumen.\n\nAceptar = WhatsApp · Cancelar = copiar al portapapeles")) {
@@ -897,10 +907,11 @@ function renderList() {
   list.innerHTML = dias.map(dia => {
     const ms = dia.items.reduce((a,s)=>a+(s.fin-s.inicio),0);
     const h = ms/3600000;
+    const eurDia = Math.round(sumaImporte(dia.items));
     const abierto = diasAbiertos.has(dia.k);
     const filas = dia.items.map(s => {
       const editable = esAdmin() || (ahora - s.fin) < VENTANA_EDICION_MIN*60000;
-      const euro = Math.round((s.fin-s.inicio)/3600000*tarifa);
+      const euro = Math.round(importeDe(s));
       if (editando != null && String(editando) === String(s.id)) {
         return `<div class="item">
           <div class="edit-box">
@@ -912,6 +923,8 @@ function renderList() {
               <div><label>Empezó</label><input class="edit-field" type="datetime-local" id="ed-ini-${s.id}" value="${toLocalInput(s.inicio)}"></div>
               <div><label>Terminó</label><input class="edit-field" type="datetime-local" id="ed-fin-${s.id}" value="${toLocalInput(s.fin)}"></div>
             </div>
+            <label>Tarifa (€/h)</label>
+            <input class="edit-field" type="number" inputmode="decimal" step="0.5" min="0" id="ed-tar-${s.id}" value="${tarifaDe(s)}">
             <div class="edit-actions">
               <button class="mini save" data-save="${s.id}">Guardar</button>
               <button class="mini cancel" data-cancel="1">Cancelar</button>
@@ -942,14 +955,14 @@ function renderList() {
             <span class="check ${diaSelec?'on':''}"></span>
             <span class="dia-fecha">${tituloDia(dia.ts)}</span>
           </span>
-          <span class="dia-tot">${fmtH(h)}${verPrecios()?` · ${Math.round(h*tarifa)}€`:""}${diaPagado?' <span class="pbadge">P</span>':''}</span>
+          <span class="dia-tot">${fmtH(h)}${verPrecios()?` · ${eurDia}€`:""}${diaPagado?' <span class="pbadge">P</span>':''}</span>
         </button>
       </div>`;
     }
     return `<div class="dia ${abierto?'open':''}">
       <button class="dia-head" data-dia="${dia.k}">
         <span class="dia-fecha">${tituloDia(dia.ts)}</span>
-        <span class="dia-tot">${fmtH(h)}${verPrecios()?` · ${Math.round(h*tarifa)}€`:""}${diaPagado?' <span class="pbadge sm">P</span>':''} <span class="chev">›</span></span>
+        <span class="dia-tot">${fmtH(h)}${verPrecios()?` · ${eurDia}€`:""}${diaPagado?' <span class="pbadge sm">P</span>':''} <span class="chev">›</span></span>
       </button>
       <div class="dia-body"><div class="dia-inner">${filas}</div></div>
     </div>`;
@@ -996,7 +1009,7 @@ async function onMain() {
       if (!nota && $("notaInput")) $("notaInput").focus();
       return;
     }
-    activa = { inicio: Date.now(), nota, categoria: catSel };
+    activa = { inicio: Date.now(), nota, categoria: catSel, tarifa };
     localStorage.setItem(LKEY+"_activa", JSON.stringify(activa));
     renderApp();
     return;
@@ -1012,7 +1025,10 @@ async function guardarEdit(id) {
   const catBtn = document.querySelector(`#ed-cats-${id} .cat.sel`);
   const categoria = catBtn ? catBtn.dataset.val : "";
   if (!(fin > inicio)) { alert("La hora de fin debe ser posterior al inicio."); return; }
-  await sbUpdate(id, { nota, inicio, fin, categoria });
+  const tarInput = $(`ed-tar-${id}`);
+  let tar = tarInput ? parseFloat(tarInput.value) : NaN;
+  if (isNaN(tar) || tar<0) tar = tarifa; // si lo dejan vacío o inválido, la global
+  await sbUpdate(id, { nota, inicio, fin, categoria, tarifa: tar });
   editando = null;
   await cargar();
 }
@@ -1062,7 +1078,7 @@ function abrirManual() {
     const catBtn = box.querySelector(".cat.sel");
     const categoria = catBtn ? catBtn.dataset.val : "";
     if (!(fin > inicio)) { alert("La hora de fin debe ser posterior al inicio."); return; }
-    await sbInsert({ inicio, fin, nota, categoria });
+    await sbInsert({ inicio, fin, nota, categoria, tarifa });
     manualAbierto=false;
     await cargar();
   };
@@ -1083,14 +1099,14 @@ async function onTarifa() {
 async function sbInsert(reg) {
   const { error } = await sb.from("fichajes").insert({
     codigo, inicio: new Date(reg.inicio).toISOString(), fin: new Date(reg.fin).toISOString(),
-    nota: reg.nota||"", categoria: reg.categoria||""
+    nota: reg.nota||"", categoria: reg.categoria||"", tarifa: reg.tarifa!=null?reg.tarifa:tarifa
   });
   if (error) alert("Error al guardar: " + error.message);
 }
 async function sbUpdate(id, d) {
-  const { error } = await sb.from("fichajes").update({
-    nota: d.nota, inicio: new Date(d.inicio).toISOString(), fin: new Date(d.fin).toISOString(), categoria: d.categoria||""
-  }).eq("id", id).eq("codigo", codigo);
+  const campos = { nota: d.nota, inicio: new Date(d.inicio).toISOString(), fin: new Date(d.fin).toISOString(), categoria: d.categoria||"" };
+  if (d.tarifa!=null) campos.tarifa = d.tarifa;
+  const { error } = await sb.from("fichajes").update(campos).eq("id", id).eq("codigo", codigo);
   if (error) alert("Error al editar: " + error.message);
 }
 async function sbDelete(id) {
@@ -1143,7 +1159,16 @@ async function cargar() {
     else { renderGate("Código no válido o sin datos: " + error.message); }
     return;
   }
-  historial = (data||[]).map(r => ({ id: r.id, inicio: new Date(r.inicio).getTime(), fin: new Date(r.fin).getTime(), nota: r.nota, categoria: r.categoria||"", pagado: !!r.pagado }));
+  historial = (data||[]).map(r => ({ id: r.id, inicio: new Date(r.inicio).getTime(), fin: new Date(r.fin).getTime(), nota: r.nota, categoria: r.categoria||"", pagado: !!r.pagado, tarifa: r.tarifa==null?null:parseFloat(r.tarifa) }));
+  // Migración: los fichajes antiguos sin tarifa se congelan a la tarifa actual.
+  const sinTarifa = historial.filter(s=>s.tarifa==null);
+  if (sinTarifa.length) {
+    const ids = sinTarifa.map(s=>s.id);
+    try {
+      await sb.from("fichajes").update({ tarifa }).in("id", ids);
+      sinTarifa.forEach(s=>{ s.tarifa = tarifa; });
+    } catch(e){ /* si falla, se reintenta en la próxima carga */ }
+  }
   renderApp();
 }
 
