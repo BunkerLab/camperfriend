@@ -37,7 +37,7 @@
     -webkit-font-smoothing: antialiased; transition: background .2s, color .2s;
   }
   .phone {
-    width: 100%; max-width: 400px; background: var(--fondo);
+    width: 100%; max-width: 400px; background: var(--fondo); position: relative;
     padding: 20px 18px calc(24px + env(safe-area-inset-bottom));
   }
   @media (min-width: 700px) {
@@ -217,11 +217,12 @@
               mask-image: linear-gradient(to top, #000 55%, transparent);
               backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
   /* Píldora flotante, solo iconos, centrada, con margen inferior */
-  .navbar { position: fixed; left: 50%; transform: translateX(-50%); z-index: 40;
+  .navbar { position: fixed; left: 0; right: 0; margin-inline: auto; width: fit-content; z-index: 40;
             bottom: calc(20px + env(safe-area-inset-bottom));
             display: flex; gap: 6px; background: var(--caja);
             border: 1px solid var(--gris-claro); border-radius: 999px;
             padding: 8px 10px; box-shadow: 0 8px 28px rgba(0,0,0,.28); }
+  @media (min-width: 700px){ .nav-fade { left: 50%; transform: translateX(-50%); width: 400px; right: auto; } }
   .navbtn { background: none; border: none; cursor: pointer; color: var(--gris);
             display: flex; align-items: center; justify-content: center;
             width: 46px; height: 46px; border-radius: 50%; transition: background .15s, color .15s; }
