@@ -844,7 +844,7 @@ function renderTension() {
         <label>Voltaje (V)<input type="number" inputmode="decimal" id="tc-v" value="${tCalc.V}"></label>
         <label>Longitud (m)<input type="number" inputmode="decimal" id="tc-l" value="${tCalc.L}"></label>
         <label>Intensidad (A)<input type="number" inputmode="decimal" id="tc-i" value="${tCalc.I}"></label>
-        <label>Caída máx (V)<input type="number" inputmode="decimal" step="0.01" id="tc-e" value="${tCalc.e}"></label>
+        <label>Caída máx (%)<input type="number" inputmode="decimal" step="0.1" id="tc-e" value="${Math.round(tCalc.e*1000)/10}"></label>
       </div>
       <div class="tcalc-out">
         <span class="tcalc-lbl">Cable recomendado</span>
@@ -856,7 +856,7 @@ function renderTension() {
                   : rec.manda==="caida"
                   ? `manda la caída de tensión (cable largo). Por corriente bastaría ${rec.porAmp.mm} mm², pero a esa longitud se pierde voltaje.`
                   : `cumple caída de tensión y corriente justo con esta sección.`}</span>
-             <span class="tcalc-note2">mínimo teórico por caída: ${(Math.round(rec.sMin*1000)/1000)} mm² · ${tCalc.mat==="Alumini"?"aluminio":"cobre"}</span>`}
+             <span class="tcalc-note2">mínimo teórico por caída: ${(Math.round(rec.sMin*1000)/1000)} mm² · ${tCalc.mat==="Alumini"?"aluminio":"cobre"} · caída máx ${Math.round(tCalc.e*1000)/10}% ≈ ${(Math.round(tCalc.e*tCalc.V*1000)/1000)} V</span>`}
       </div>
     </div>
 
@@ -877,7 +877,7 @@ function renderTension() {
     tCalc.V = parseFloat($("tc-v").value)||0;
     tCalc.L = parseFloat($("tc-l").value)||0;
     tCalc.I = parseFloat($("tc-i").value)||0;
-    tCalc.e = parseFloat($("tc-e").value)||0;
+    tCalc.e = (parseFloat($("tc-e").value)||0) / 100; // el campo está en %, se guarda como fracción
     localStorage.setItem(LKEY+"_tcalc", JSON.stringify(tCalc));
     renderApp();
   };
