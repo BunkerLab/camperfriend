@@ -134,7 +134,7 @@
   .dia.selmode .dia-head { cursor: pointer; }
   .dia.selmode.selected { outline: 2px solid var(--rojo); }
   .dia-left { display: flex; align-items: center; gap: 12px; }
-  .selbar { position: sticky; bottom: 12px; background: var(--rojo); border-radius: 14px;
+  .selbar { position: sticky; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 41; background: var(--rojo); border-radius: 14px;
             padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
             gap: 10px; margin: 12px 0; box-shadow: 0 6px 20px rgba(215,25,33,.4); }
   .selbar-txt { font-size: 13px; font-weight: 700; color: #fff; }
@@ -209,17 +209,23 @@
   .confirm-ok { background: var(--rojo); border: none; color: #fff; }
   @keyframes popIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
   /* Barra de navegación inferior */
-  .phone { padding-bottom: 78px; }
-  .navbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-            display: flex; background: var(--caja); border-top: 1px solid var(--gris-claro);
-            padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); }
-  @media (min-width: 700px){ .navbar { max-width: 460px; left: 50%; transform: translateX(-50%);
-            border-radius: 0 0 24px 24px; border-left: 1px solid var(--gris-claro); border-right: 1px solid var(--gris-claro); } }
-  .navbtn { flex: 1; background: none; border: none; cursor: pointer; color: var(--gris);
-            display: flex; flex-direction: column; align-items: center; gap: 3px;
-            font-family: 'NType'; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; padding: 4px 0; }
-  .navbtn span { opacity: .9; }
-  .navbtn.on { color: var(--tinta); }
+  .phone { padding-bottom: 96px; }
+  /* Degradado que difumina el contenido al pasar por detrás de la píldora */
+  .nav-fade { position: fixed; left: 0; right: 0; bottom: 0; height: 110px; z-index: 39; pointer-events: none;
+              background: linear-gradient(to top, var(--fondo) 30%, transparent);
+              -webkit-mask-image: linear-gradient(to top, #000 55%, transparent);
+              mask-image: linear-gradient(to top, #000 55%, transparent);
+              backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  /* Píldora flotante, solo iconos, centrada, con margen inferior */
+  .navbar { position: fixed; left: 50%; transform: translateX(-50%); z-index: 40;
+            bottom: calc(20px + env(safe-area-inset-bottom));
+            display: flex; gap: 6px; background: var(--caja);
+            border: 1px solid var(--gris-claro); border-radius: 999px;
+            padding: 8px 10px; box-shadow: 0 8px 28px rgba(0,0,0,.28); }
+  .navbtn { background: none; border: none; cursor: pointer; color: var(--gris);
+            display: flex; align-items: center; justify-content: center;
+            width: 46px; height: 46px; border-radius: 50%; transition: background .15s, color .15s; }
+  .navbtn.on { color: var(--tinta); background: var(--fondo); }
   .navbtn.on svg { stroke: var(--rojo); }
   /* Tensión: calculadora */
   .tcalc { background: var(--caja); border-radius: 18px; padding: 16px; margin-bottom: 18px; }
@@ -949,12 +955,15 @@ const IC_AJUSTES = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" 
 
 // Inserta (o reemplaza) la barra de navegación inferior dentro de #app
 function inyectarNav() {
+  const fade = document.createElement("div");
+  fade.className = "nav-fade";
+  $("app").appendChild(fade);
   const nav = document.createElement("nav");
   nav.className = "navbar";
   nav.innerHTML = `
-    <button class="navbtn ${tab==='fichar'?'on':''}" data-tab="fichar">${IC_FICHAR}<span>Fichar</span></button>
-    <button class="navbtn ${tab==='tension'?'on':''}" data-tab="tension">${IC_TENSION}<span>Tensión</span></button>
-    <button class="navbtn ${tab==='ajustes'?'on':''}" data-tab="ajustes">${IC_AJUSTES}<span>Ajustes</span></button>`;
+    <button class="navbtn ${tab==='fichar'?'on':''}" data-tab="fichar" title="Fichar">${IC_FICHAR}</button>
+    <button class="navbtn ${tab==='tension'?'on':''}" data-tab="tension" title="Tensión">${IC_TENSION}</button>
+    <button class="navbtn ${tab==='ajustes'?'on':''}" data-tab="ajustes" title="Ajustes">${IC_AJUSTES}</button>`;
   $("app").appendChild(nav);
   nav.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
     if (tab === b.dataset.tab) return;
