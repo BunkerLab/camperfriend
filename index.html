@@ -398,7 +398,6 @@ const TARIFA_DEFECTO = 10; // €/hora
 const VENTANA_EDICION_MIN = 60; // minutos que puede editar Hugo tras terminar
 const HORAS_SIN_CERRAR = 12; // si un fichaje activo supera esto, se considera "sin cerrar"
 const CATEGORIAS = ["Aislamiento","Eléctrico","Fontanería","Mobiliario","Otros"];
-const PASS_ADMIN = "camper-edgar"; // contraseña de Edgar (admin) dentro de una furgo
 const COD_MAESTRO = "Bnkr1593"; // código maestro para el panel de gestión de furgos
 // ═══════════════════════════════════════════════════════════════
 
@@ -427,17 +426,13 @@ let tCalc = JSON.parse(localStorage.getItem(LKEY+"_tcalc") || 'null') || { V:12,
 function aplicarTema(){ document.documentElement.setAttribute("data-theme", tema); }
 function toggleTema(){ tema = (tema==="dark"?"light":"dark"); localStorage.setItem(LKEY+"_tema", tema); aplicarTema(); renderApp(); }
 aplicarTema();
-let ocultarGlobal = false;  // ocultar precios para todos (guardado en Supabase)
-let ocultarHugo = false;    // ocultar precios solo en la vista de Hugo (guardado en Supabase)
+let ocultarGlobal = false;  // esta furgo no tarifica (sin precios)
+let ocultarHugo = false;    // (obsoleto, se mantiene por compatibilidad con la tabla ajustes)
 let timer = null;
-const esAdmin = () => persona === "Edgar";
-// ¿Se muestran los precios en la vista actual?
-const verPrecios = () => {
-  if (ocultarGlobal) return false;
-  if (ocultarHugo && persona === "Hugo") return false;
-  if (persona === "Hugo" && localStorage.getItem(LKEY+"_hugoOcultaPrecio")==="1") return false;
-  return true;
-};
+// Ya no hay roles: quien entra en una furgo (dueño o admin) ve y gestiona todo.
+const esAdmin = () => true;
+// ¿Se muestran los precios? Solo se ocultan si la furgo se creó sin tarifa.
+const verPrecios = () => !ocultarGlobal;
 
 const cfgOk = SUPABASE_URL !== "PON_AQUI_TU_URL" && SUPABASE_KEY !== "PON_AQUI_TU_ANON_KEY";
 if (cfgOk) sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -614,41 +609,12 @@ function renderGate(msg) {
       cargarUsuarios();
       return;
     }
-    codigo = c; localStorage.setItem(LKEY + "_codigo", c);
+    codigo = c; persona = "Edgar";
+    localStorage.setItem(LKEY + "_codigo", c);
+    localStorage.setItem(LKEY + "_persona", "Edgar");
     cargar();
   };
   $("codeInput").addEventListener("keydown", e => { if (e.key==="Enter") $("enterBtn").click(); });
-}
-
-// ── Pantalla: ¿Quién eres? ─────────────────────────────────────
-function renderPersona(msg) {
-  $("app").innerHTML = `
-    <div class="gate">
-      <div class="logo" style="margin:0 auto">🚐</div>
-      <h2>¿Quién eres?</h2>
-      <p>Elige tu nombre para entrar</p>
-      <button class="btn start" id="soyHugo" style="margin-bottom:12px">Hugo</button>
-      <button class="btn" id="soyEdgar" style="background:var(--tinta)">Edgar (admin)</button>
-      <div id="adminPass" style="display:none;margin-top:16px">
-        <input class="nota" id="passInput" type="password" placeholder="Contraseña de admin" style="text-align:center">
-        <button class="btn start" id="passBtn">Entrar como Edgar</button>
-      </div>
-      <div class="status ${msg?'err':''}" id="pStatus">${msg||""}</div>
-      <div style="margin-top:14px"><a class="cfg-link" id="cambiarCodigo" style="color:var(--gris);font-size:12px;text-decoration:underline;cursor:pointer">cambiar código</a></div>
-    </div>`;
-  $("soyHugo").onclick = () => { persona = "Hugo"; localStorage.setItem(LKEY+"_persona","Hugo"); cargar(); };
-  $("soyEdgar").onclick = () => { $("adminPass").style.display = "block"; $("passInput").focus(); };
-  const entrarEdgar = () => {
-    if ($("passInput").value === PASS_ADMIN) {
-      persona = "Edgar"; localStorage.setItem(LKEY+"_persona","Edgar"); cargar();
-    } else { renderPersona("Contraseña incorrecta."); $("adminPass").style.display="block"; }
-  };
-  $("passBtn").onclick = entrarEdgar;
-  $("passInput").addEventListener("keydown", e => { if (e.key==="Enter") entrarEdgar(); });
-  $("cambiarCodigo").onclick = () => {
-    localStorage.removeItem(LKEY+"_codigo"); localStorage.removeItem(LKEY+"_persona");
-    codigo = null; persona = null; renderGate();
-  };
 }
 
 // ── App principal ──────────────────────────────────────────────
@@ -1011,10 +977,9 @@ function renderFichar() {
       <div class="logo">N</div>
       <div class="head-txt">
         <div class="title">Fichador</div>
-        <div class="sub">Camper</div>
+        <div class="sub">${(usuarios.find(u=>u.codigo===codigo)||{}).nombre || "Camper"}</div>
       </div>
       <button class="icon-btn" id="temaBtn" title="Tema">${tema==="dark"?SOL:LUNA}</button>
-      ${(!esAdmin() && persona==="Hugo")?`<button class="icon-btn" id="ojoBtn" title="Mostrar/ocultar precio">${localStorage.getItem(LKEY+"_hugoOcultaPrecio")==="1"?OJO_OFF:OJO}</button>`:""}
     </header>
     ${sinCerrar?`<div class="warn">
       <div class="warn-t">Fichaje sin cerrar</div>
@@ -1110,11 +1075,6 @@ function renderFichar() {
   if ($("notaInput")) $("notaInput").addEventListener("input", validarInicio);
   if ($("refreshBtn")) $("refreshBtn").onclick = cargar;
   $("temaBtn").onclick = toggleTema;
-  if ($("ojoBtn")) $("ojoBtn").onclick = ()=>{
-    const oculto = localStorage.getItem(LKEY+"_hugoOcultaPrecio")==="1";
-    localStorage.setItem(LKEY+"_hugoOcultaPrecio", oculto?"0":"1");
-    renderApp();
-  };
   if ($("addBtn")) $("addBtn").onclick = ()=>abrirManual();
   if ($("selBtn")) $("selBtn").onclick = ()=>{ modoSel=true; diasSel.clear(); renderApp(); };
   if ($("selCancel")) $("selCancel").onclick = ()=>{ modoSel=false; diasSel.clear(); renderApp(); };
@@ -1231,38 +1191,18 @@ function actualizarSelbar() {
 
 // ── Pantalla de ajustes (solo admin) ───────────────────────────
 function renderAjustesTab() {
-  const admin = esAdmin();
-  const hugoOculta = localStorage.getItem(LKEY+"_hugoOcultaPrecio")==="1";
+  const nombreFurgo = (usuarios.find(u=>u.codigo===codigo)||{}).nombre;
   $("app").innerHTML = `
     <header>
       <div class="logo">N</div>
-      <div class="head-txt"><div class="title">Ajustes</div><div class="sub">${admin?'Administrador':escapeHtml(persona||"")}</div></div>
+      <div class="head-txt"><div class="title">Ajustes</div><div class="sub">${nombreFurgo?escapeHtml(nombreFurgo):"Esta furgoneta"}</div></div>
       <button class="icon-btn" id="temaBtn" title="Tema">${tema==="dark"?SOL:LUNA}</button>
     </header>
-
-    ${!admin?`
-    <div class="set-group">
-      <div class="set-label">Precios</div>
-      <div class="set-row">
-        <div><div class="set-row-t">Ocultar precios</div><div class="set-row-s">Solo verás las horas, no el dinero</div></div>
-        <button class="switch ${hugoOculta?'on':''}" id="tglHugoLocal" role="switch"><span class="knob"></span></button>
-      </div>
-    </div>`:""}
-
-    ${admin?`
-    <div class="set-group">
-      <div class="set-label">Ver la app como</div>
-      <div class="seg2">
-        <button class="seg-btn ${persona==='Hugo'?'active':''}" data-persona="Hugo">Hugo</button>
-        <button class="seg-btn ${persona==='Edgar'?'active':''}" data-persona="Edgar">Edgar</button>
-      </div>
-      <div class="set-hint">Cambia entre vistas sin salir de la sesión.</div>
-    </div>
 
     <div class="set-group">
       <div class="set-label">Tarifa por hora</div>
       <div class="set-row">
-        <span class="set-val">${tarifa} €/h</span>
+        <span class="set-val">${ocultarGlobal?"sin precios":`${tarifa} €/h`}</span>
         <button class="pill" id="editTarifa">Cambiar</button>
       </div>
       <div class="set-hint">Solo afecta a los fichajes nuevos. Los antiguos mantienen su tarifa.</div>
@@ -1271,12 +1211,8 @@ function renderAjustesTab() {
     <div class="set-group">
       <div class="set-label">Precios</div>
       <div class="set-row">
-        <div><div class="set-row-t">Ocultar precios para todos</div><div class="set-row-s">Hugo y Edgar solo verán horas</div></div>
+        <div><div class="set-row-t">Esta furgo no se tarifica</div><div class="set-row-s">Oculta el dinero: solo se ven las horas</div></div>
         <button class="switch ${ocultarGlobal?'on':''}" id="tglGlobal" role="switch"><span class="knob"></span></button>
-      </div>
-      <div class="set-row">
-        <div><div class="set-row-t">Ocultar precios a Hugo</div><div class="set-row-s">Tú sigues viéndolos, Hugo no</div></div>
-        <button class="switch ${ocultarHugo?'on':''}" id="tglHugo" role="switch"><span class="knob"></span></button>
       </div>
     </div>
 
@@ -1302,40 +1238,27 @@ function renderAjustesTab() {
         <div><div class="set-row-t">Borrar todo el historial</div><div class="set-row-s">Elimina todos los fichajes. Irreversible.</div></div>
         <button class="pill danger" id="borrarTodo">Borrar</button>
       </div>
-    </div>`:""}
+    </div>
 
     <div class="set-group">
       <div class="set-label">Sesión</div>
       <div class="set-row">
-        <div><div class="set-row-t">${escapeHtml(persona||"")}${admin?' · admin':''}</div><div class="set-row-s">Cerrar sesión en este dispositivo</div></div>
-        <button class="pill" id="salirBtn">Salir</button>
+        <div><div class="set-row-t">${esMaestro?"Volver al panel":"Cerrar sesión"}</div><div class="set-row-s">${esMaestro?"Vuelve a la lista de furgos":"Salir de esta furgoneta"}</div></div>
+        <button class="pill" id="salirBtn">${esMaestro?"Volver":"Salir"}</button>
       </div>
     </div>`;
 
   $("temaBtn").onclick = toggleTema;
-  if ($("tglHugoLocal")) $("tglHugoLocal").onclick = ()=>{
-    localStorage.setItem(LKEY+"_hugoOcultaPrecio", hugoOculta?"0":"1"); renderApp();
-  };
-  $$("[data-persona]").forEach(b=>b.onclick=async ()=>{
-    persona = b.dataset.persona; localStorage.setItem(LKEY+"_persona", persona);
-    await cargar();
-  });
   if ($("editTarifa")) $("editTarifa").onclick = onTarifa;
   if ($("tglGlobal")) $("tglGlobal").onclick = async ()=>{ ocultarGlobal = !ocultarGlobal; await guardarAjustes(); renderApp(); };
-  if ($("tglHugo")) $("tglHugo").onclick = async ()=>{ ocultarHugo = !ocultarHugo; await guardarAjustes(); renderApp(); };
   if ($("resumenPago")) $("resumenPago").onclick = generarResumenPago;
   if ($("syncBtn")) $("syncBtn").onclick = async ()=>{ await cargar(); };
   if ($("borrarTodo")) $("borrarTodo").onclick = borrarTodo;
   $("salirBtn").onclick = () => {
     localStorage.removeItem(LKEY+"_persona");
-    if (esMaestro) {
-      // el admin maestro vuelve a su panel de furgos, no cierra sesión de admin
-      localStorage.removeItem(LKEY+"_codigo");
-      codigo=null; persona=null; cargarUsuarios();
-    } else {
-      localStorage.removeItem(LKEY+"_codigo");
-      codigo=null; persona=null; renderGate();
-    }
+    localStorage.removeItem(LKEY+"_codigo");
+    codigo=null; persona=null;
+    if (esMaestro) cargarUsuarios(); else renderGate();
   };
 }
 
@@ -1695,7 +1618,7 @@ async function borrarTodo() {
 async function cargar() {
   if (!cfgOk) { renderApp(); return; }
   if (!codigo) { renderGate(); return; }
-  if (!persona) { renderPersona(); return; }
+  persona = "Edgar"; // ya no hay roles: quien entra gestiona todo
   // recuperar fichaje activo local
   try { const a = localStorage.getItem(LKEY+"_activa"); activa = a?JSON.parse(a):null; } catch(e){ activa=null; }
   try { const p = localStorage.getItem(LKEY+"_pausado"); pausado = p?JSON.parse(p):null; } catch(e){ pausado=null; }
@@ -1731,8 +1654,6 @@ if (!cfgOk) {
   cargarUsuarios();
 } else if (!codigo) {
   renderGate();
-} else if (!persona) {
-  renderPersona();
 } else {
   cargar();
 }
