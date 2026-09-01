@@ -316,6 +316,8 @@
   .item-tags { margin-top: 6px; }
   .item-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .item-euro { font-family: 'Ndot'; color: var(--tinta); font-size: 15px; letter-spacing: 1px; }
+  .item-precio { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+  .item-tarifa { font-size: 9px; color: var(--gris); letter-spacing: .5px; margin-top: 2px; text-transform: uppercase; }
   .edit-icon { background: var(--gris-claro); border: none; border-radius: 9px; cursor: pointer;
                width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
                color: var(--gris); transition: background .15s, color .15s; }
@@ -1376,7 +1378,7 @@ function renderList() {
             ${s.categoria?`<div class="item-tags"><span class="tag">${escapeHtml(s.categoria)}</span></div>`:""}
           </div>
           <div class="item-right">
-            ${verPrecios()?`<span class="item-euro">${euro}€</span>`:""}
+            ${verPrecios()?`<span class="item-precio"><span class="item-euro">${euro}€</span><span class="item-tarifa">${tarifaDe(s)}€/h</span></span>`:""}
             ${editable?`<button class="edit-icon" data-edit="${s.id}" title="Editar">${LAPIZ}</button>`:""}
           </div>
         </div>
@@ -1555,7 +1557,12 @@ function abrirManual() {
 }
 
 async function onTarifa() {
-  if (!esAdmin()) return;
+  // Cambiar la tarifa requiere el código maestro (salvo que ya seas el admin maestro)
+  if (!esMaestro) {
+    const clave = prompt("Introduce el código de administrador para cambiar la tarifa:");
+    if (clave === null) return;               // canceló
+    if (clave.trim() !== COD_MAESTRO) { alert("Código incorrecto."); return; }
+  }
   const v = prompt("Precio por hora (€):", tarifa);
   if (v!==null && !isNaN(parseFloat(v))) {
     tarifa = parseFloat(v);
