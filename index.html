@@ -260,6 +260,13 @@
   .ted-hint { font-size: 11px; color: var(--gris); line-height: 1.4; margin-bottom: 18px; }
   .ted-del { background: none; border: none; color: var(--rojo); font-family: 'NType'; font-weight: 700;
         text-transform: uppercase; letter-spacing: 1px; font-size: 13px; cursor: pointer; padding: 14px 6px; }
+  /* Panel maestro: tarjetas de furgo */
+  .furgo-card { width: 100%; display: flex; justify-content: space-between; align-items: center;
+        background: var(--caja); border: 1px solid var(--gris-claro); border-radius: 14px; padding: 16px 18px;
+        cursor: pointer; text-align: left; font-family: 'NType'; margin-bottom: 8px; }
+  .furgo-nom { font-size: 16px; font-weight: 600; color: var(--tinta); }
+  .furgo-sub { font-size: 11px; color: var(--gris); margin-top: 3px; text-transform: uppercase; letter-spacing: 1px; }
+  .furgo-go { font-size: 22px; color: var(--gris); }
   .refresh { background: none; border: 1px solid var(--gris-claro); border-radius: 20px;
              padding: 7px 14px; font-size: 11px; color: var(--tinta); cursor: pointer; font-weight: 700;
              text-transform: uppercase; letter-spacing: 1px; transition: border-color .15s; font-family: 'NType'; }
@@ -391,7 +398,8 @@ const TARIFA_DEFECTO = 10; // €/hora
 const VENTANA_EDICION_MIN = 60; // minutos que puede editar Hugo tras terminar
 const HORAS_SIN_CERRAR = 12; // si un fichaje activo supera esto, se considera "sin cerrar"
 const CATEGORIAS = ["Aislamiento","Eléctrico","Fontanería","Mobiliario","Otros"];
-const PASS_ADMIN = "camper-edgar"; // contraseña de Edgar (admin) — cámbiala por la que quieras
+const PASS_ADMIN = "camper-edgar"; // contraseña de Edgar (admin) dentro de una furgo
+const COD_MAESTRO = "Bnkr1593"; // código maestro para el panel de gestión de furgos
 // ═══════════════════════════════════════════════════════════════
 
 const LKEY = "fichador_camper_cloud";
@@ -399,6 +407,8 @@ let sb = null, activa = null, historial = [], tarifa = TARIFA_DEFECTO;
 let pausado = null; // tarea pausada: {nota, categoria, tarifa} heredables al retomar
 let codigo = localStorage.getItem(LKEY + "_codigo") || null;
 let persona = localStorage.getItem(LKEY + "_persona") || null; // "Hugo" | "Edgar"
+let esMaestro = localStorage.getItem(LKEY + "_maestro") === "1"; // sesión de admin maestro
+let usuarios = []; // furgos gestionadas (solo para el admin maestro)
 let editando = null; // id del fichaje en edición
 let diasAbiertos = new Set(); // claves de día abiertas en el acordeón
 let catSel = ""; // categoría elegida para el próximo fichaje
@@ -504,6 +514,85 @@ const escapeHtml = (s="") => s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">"
 const toLocalInput = (ts) => { const d=new Date(ts); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); };
 const fromLocalInput = (v) => new Date(v).getTime();
 
+// ── Panel maestro: gestión de furgos (usuarios) ────────────────
+async function cargarUsuarios() {
+  if (!sb) { renderPanelMaestro("Sin conexión."); return; }
+  const { data, error } = await sb.from("usuarios").select("*").eq("admin_codigo", COD_MAESTRO).order("nombre");
+  if (error) { renderPanelMaestro("Error: "+error.message); return; }
+  usuarios = data||[];
+  renderPanelMaestro();
+}
+
+function renderPanelMaestro(msg) {
+  const filas = usuarios.map(u=>`
+    <button class="furgo-card" data-furgo="${escapeHtml(u.codigo)}">
+      <div class="furgo-l">
+        <div class="furgo-nom">${escapeHtml(u.nombre)}</div>
+        <div class="furgo-sub">${u.ocultar_global?"sin precios":`${u.tarifa} €/h`}</div>
+      </div>
+      <span class="furgo-go">›</span>
+    </button>`).join("");
+  $("app").innerHTML = `
+    <header>
+      <div class="logo">N</div>
+      <div class="head-txt"><div class="title">Furgos</div><div class="sub">Panel de administración</div></div>
+      <button class="icon-btn" id="temaBtn" title="Tema">${tema==="dark"?SOL:LUNA}</button>
+    </header>
+    ${msg?`<div class="status err" style="margin-bottom:12px">${msg}</div>`:""}
+    <div class="tlist-head"><span>Tus furgos</span><button class="tadd" id="nuevaFurgoBtn">+ Nueva</button></div>
+    <div class="tlist">${filas || `<div class="tvacio">Aún no hay furgos. Crea la primera.</div>`}</div>
+    <div class="set-group" style="margin-top:24px">
+      <div class="set-row">
+        <div><div class="set-row-t">Salir del panel</div><div class="set-row-s">Cerrar sesión de administración</div></div>
+        <button class="pill" id="salirMaestro">Salir</button>
+      </div>
+    </div>
+    ${confirmState?renderConfirm():""}`;
+  $("temaBtn").onclick = toggleTema;
+  $("nuevaFurgoBtn").onclick = abrirNuevaFurgo;
+  $$("[data-furgo]").forEach(b=>b.onclick=()=>entrarEnFurgo(b.dataset.furgo));
+  $("salirMaestro").onclick = ()=>{
+    esMaestro=false; localStorage.removeItem(LKEY+"_maestro"); renderGate();
+  };
+  if ($("confirmCancel")) $("confirmCancel").onclick = cerrarConfirm;
+  if ($("confirmBackdrop")) $("confirmBackdrop").onclick = (e)=>{ if(e.target===$("confirmBackdrop")) cerrarConfirm(); };
+  if ($("confirmOk")) $("confirmOk").onclick = ()=>{ const fn=confirmState&&confirmState.onOk; confirmState=null; if(fn) fn(); };
+}
+
+// El admin maestro entra en una furgo: fija su código y entra ya como Edgar.
+function entrarEnFurgo(cod) {
+  codigo = cod; persona = "Edgar";
+  localStorage.setItem(LKEY+"_codigo", cod);
+  localStorage.setItem(LKEY+"_persona", "Edgar");
+  tab = "fichar";
+  cargar();
+}
+
+function abrirNuevaFurgo() {
+  const nombre = prompt("Nombre de la furgo (ej. IVECO):");
+  if (!nombre || !nombre.trim()) return;
+  const cod = prompt("Código/contraseña con la que entrará esta furgo:");
+  if (!cod || !cod.trim()) return;
+  const tar = prompt("Tarifa €/h (deja vacío si no se tarifica):", "10");
+  crearFurgo(nombre.trim(), cod.trim(), tar);
+}
+
+async function crearFurgo(nombre, cod, tar) {
+  const tarifaNum = (tar && !isNaN(parseFloat(tar))) ? parseFloat(tar) : 0;
+  const sinPrecio = !(tar && !isNaN(parseFloat(tar))); // si no pones tarifa, se oculta precio
+  // ¿el código ya existe?
+  const { data: ya } = await sb.from("usuarios").select("codigo").eq("codigo", cod).maybeSingle();
+  if (ya) { alert("Ese código ya está en uso por otra furgo. Elige otro."); return; }
+  const { error } = await sb.from("usuarios").insert({
+    admin_codigo: COD_MAESTRO, nombre, codigo: cod, tarifa: tarifaNum,
+    ocultar_global: sinPrecio, ocultar_hugo: false
+  });
+  if (error) { alert("Error al crear: "+error.message); return; }
+  // crea también su fila de ajustes para que la furgo arranque con esa tarifa/toggle
+  await sb.from("ajustes").upsert({ codigo: cod, tarifa: tarifaNum, ocultar_global: sinPrecio, ocultar_hugo: false }, { onConflict: "codigo" });
+  await cargarUsuarios();
+}
+
 // ── Pantalla de acceso ─────────────────────────────────────────
 function renderGate(msg) {
   $("app").innerHTML = `
@@ -518,6 +607,13 @@ function renderGate(msg) {
   $("enterBtn").onclick = () => {
     const c = $("codeInput").value.trim();
     if (!c) { $("gateStatus").textContent = "Escribe el código."; return; }
+    if (c === COD_MAESTRO) {
+      esMaestro = true; localStorage.setItem(LKEY+"_maestro","1");
+      localStorage.removeItem(LKEY+"_codigo"); localStorage.removeItem(LKEY+"_persona");
+      codigo = null; persona = null;
+      cargarUsuarios();
+      return;
+    }
     codigo = c; localStorage.setItem(LKEY + "_codigo", c);
     cargar();
   };
@@ -1210,8 +1306,15 @@ function renderAjustesTab() {
   if ($("syncBtn")) $("syncBtn").onclick = async ()=>{ await cargar(); };
   if ($("borrarTodo")) $("borrarTodo").onclick = borrarTodo;
   $("salirBtn").onclick = () => {
-    localStorage.removeItem(LKEY+"_codigo"); localStorage.removeItem(LKEY+"_persona");
-    codigo=null; persona=null; renderGate();
+    localStorage.removeItem(LKEY+"_persona");
+    if (esMaestro) {
+      // el admin maestro vuelve a su panel de furgos, no cierra sesión de admin
+      localStorage.removeItem(LKEY+"_codigo");
+      codigo=null; persona=null; cargarUsuarios();
+    } else {
+      localStorage.removeItem(LKEY+"_codigo");
+      codigo=null; persona=null; renderGate();
+    }
   };
 }
 
@@ -1547,6 +1650,8 @@ async function guardarAjustes() {
     { codigo, tarifa, ocultar_global: ocultarGlobal, ocultar_hugo: ocultarHugo },
     { onConflict: "codigo" });
   if (error) console.warn("No se pudieron guardar los ajustes:", error.message);
+  // si esta furgo está gestionada por el admin maestro, mantener sincronizada la tabla usuarios
+  try { await sb.from("usuarios").update({ tarifa, ocultar_global: ocultarGlobal, ocultar_hugo: ocultarHugo }).eq("codigo", codigo); } catch(e){}
 }
 async function leerAjustes() {
   const { data, error } = await sb.from("ajustes").select("*").eq("codigo", codigo).maybeSingle();
@@ -1601,6 +1706,8 @@ if (!cfgOk) {
   $("app").innerHTML = `<div class="gate"><div class="logo" style="margin:0 auto">🚐</div>
     <h2>Falta configurar</h2>
     <p>Abre el archivo y rellena <b>SUPABASE_URL</b> y <b>SUPABASE_KEY</b> con tus claves (mira la guía).</p></div>`;
+} else if (esMaestro && !codigo) {
+  cargarUsuarios();
 } else if (!codigo) {
   renderGate();
 } else if (!persona) {
