@@ -771,12 +771,31 @@ function intensidadLinea(l) {
   if (l.potencia!=null && !isNaN(l.potencia) && tCalc.V) return l.potencia/tCalc.V;
   return null;
 }
+// Sección que se usa para una línea: la manual si la hay; si no, la recomendada
+// (mayor de caída de tensión y ampacidad), usando la caída máx de la calculadora.
+// Devuelve {mm, awg, auto} o null si faltan datos.
+function seccionEfectiva(l) {
+  if (l.seccion!=null && !isNaN(l.seccion) && l.seccion>0) {
+    const cab = TABLA_CABLES.find(c=>c.mm>=l.seccion);
+    return { mm: l.seccion, awg: cab?cab.awg:null, auto:false };
+  }
+  const I = intensidadLinea(l);
+  const y = tCalc.mat==="Alumini" ? 35 : 56;
+  if (I==null || !l.longitud || !tCalc.e || !tCalc.V) return null;
+  const sMin = (2*l.longitud*I)/(y*tCalc.e*tCalc.V);   // por caída
+  const porCaida = TABLA_CABLES.find(c=>c.mm>=sMin);
+  const porAmp   = TABLA_CABLES.find(c=>c.a>=I);
+  if (!porCaida || !porAmp) return null;               // fuera de tabla
+  const el = porCaida.mm >= porAmp.mm ? porCaida : porAmp;
+  return { mm: el.mm, awg: el.awg, auto:true };
+}
 // Caída de tensión de una línea: {pct, volt} según e% = (2·L·I)/(S·y·V)
 function caidaLinea(l) {
   const I = intensidadLinea(l);
   const y = tCalc.mat==="Alumini" ? 35 : 56;
-  if (I==null || !l.seccion || !l.longitud || !tCalc.V) return { pct:null, volt:null };
-  const pct = (2*l.longitud*I)/(l.seccion*y*tCalc.V);
+  const sec = seccionEfectiva(l);
+  if (I==null || !sec || !l.longitud || !tCalc.V) return { pct:null, volt:null };
+  const pct = (2*l.longitud*I)/(sec.mm*y*tCalc.V);
   return { pct, volt: pct*tCalc.V };
 }
 // Sección recomendada por la calculadora: S = (2·L·I)/(y·e%·V)
@@ -816,11 +835,13 @@ function renderTension() {
   const filas = lineas.map(l=>{
     const I = intensidadLinea(l);
     const {pct, volt} = caidaLinea(l);
+    const sec = seccionEfectiva(l);
     const alta = volt!=null && volt>0.5; // límite 0,5 V del Excel
+    const secTxt = sec ? `${sec.mm} mm²${sec.awg?` (AWG ${sec.awg})`:""}${sec.auto?" · auto":""}` : "—";
     return `<button class="tline ${alta?'alta':''}" data-tline="${l.id}">
       <div class="tline-l">
         <div class="tline-nom">${escapeHtml(l.nombre||"(sin nombre)")}${l.ref?`<span class="tline-ref">${escapeHtml(l.ref)}</span>`:""}</div>
-        <div class="tline-sub">${I!=null?`${(Math.round(I*100)/100)} A`:"—"} · ${l.seccion?`${l.seccion} mm²`:"—"} · ${l.longitud?`${l.longitud} m`:"—"}</div>
+        <div class="tline-sub">${I!=null?`${(Math.round(I*100)/100)} A`:"—"} · ${secTxt} · ${l.longitud?`${l.longitud} m`:"—"}</div>
       </div>
       <div class="tline-r">
         <div class="tline-v ${alta?'alta':''}">${volt!=null?`${(Math.round(volt*1000)/1000)} V`:"—"}</div>
@@ -906,9 +927,9 @@ function renderTensEdit() {
         <label>Longitud (m)<input id="ted-lon" type="number" inputmode="decimal" value="${l.longitud??""}"></label>
         <label>Potencia (W)<input id="ted-pot" type="number" inputmode="decimal" value="${l.potencia??""}"></label>
         <label>Intensidad (A)<input id="ted-int" type="number" inputmode="decimal" value="${l.intensidad??""}" placeholder="o se calcula de W"></label>
-        <label>Sección (mm²)<input id="ted-sec" type="number" inputmode="decimal" value="${l.seccion??""}"></label>
+        <label>Sección (mm²)<input id="ted-sec" type="number" inputmode="decimal" value="${l.seccion??""}" placeholder="vacío = automática"></label>
       </div>
-      <div class="ted-hint">Rellena potencia <b>o</b> intensidad. Si pones potencia, la intensidad se calcula (W ÷ voltaje).</div>
+      <div class="ted-hint">Rellena potencia <b>o</b> intensidad. Si pones potencia, la intensidad se calcula (W ÷ voltaje). Si dejas la <b>sección vacía</b>, se recomienda sola con la caída máx de la calculadora.</div>
       <div class="confirm-btns">
         ${!nueva?`<button class="ted-del" id="tedDel">Borrar</button>`:""}
         <button class="confirm-cancel" id="tedCancel">Cancelar</button>
