@@ -208,6 +208,57 @@
   .confirm-cancel { background: var(--caja); border: none; color: var(--tinta); }
   .confirm-ok { background: var(--rojo); border: none; color: #fff; }
   @keyframes popIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
+  /* Barra de navegación inferior */
+  .phone { padding-bottom: 78px; }
+  .navbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+            display: flex; background: var(--caja); border-top: 1px solid var(--gris-claro);
+            padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); }
+  @media (min-width: 700px){ .navbar { max-width: 460px; left: 50%; transform: translateX(-50%);
+            border-radius: 0 0 24px 24px; border-left: 1px solid var(--gris-claro); border-right: 1px solid var(--gris-claro); } }
+  .navbtn { flex: 1; background: none; border: none; cursor: pointer; color: var(--gris);
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            font-family: 'NType'; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; padding: 4px 0; }
+  .navbtn span { opacity: .9; }
+  .navbtn.on { color: var(--tinta); }
+  .navbtn.on svg { stroke: var(--rojo); }
+  /* Tensión: calculadora */
+  .tcalc { background: var(--caja); border-radius: 18px; padding: 16px; margin-bottom: 18px; }
+  .tcalc-h { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gris); margin-bottom: 12px; }
+  .tcalc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tcalc-grid label, .ted-grid label { display: flex; flex-direction: column; font-size: 10px; text-transform: uppercase;
+        letter-spacing: 1px; color: var(--gris); gap: 5px; }
+  .tcalc-grid input, .tcalc-grid select, .ted-grid input {
+        background: var(--fondo); border: 1px solid var(--gris-claro); border-radius: 10px; padding: 11px 12px;
+        color: var(--tinta); font-family: 'NType'; font-size: 15px; -webkit-appearance: none; width: 100%; }
+  .tcalc-out { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--gris-claro); display: flex; flex-direction: column; gap: 3px; }
+  .tcalc-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gris); }
+  .tcalc-val { font-family: 'Ndot'; font-size: 32px; color: var(--rojo); letter-spacing: 1px; }
+  .tcalc-note { font-size: 10px; color: var(--gris); opacity: .8; }
+  /* Tensión: lista de líneas */
+  .tlist-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .tlist-head span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gris); }
+  .tadd { background: var(--tinta); color: var(--fondo); border: none; border-radius: 20px; padding: 8px 16px;
+        font-family: 'NType'; font-size: 12px; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+  .tlist { display: flex; flex-direction: column; gap: 8px; }
+  .tvacio { text-align: center; color: var(--gris); font-size: 13px; padding: 30px 0; }
+  .tline { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        background: var(--caja); border: 1px solid var(--gris-claro); border-radius: 14px; padding: 14px 16px;
+        cursor: pointer; text-align: left; font-family: 'NType'; }
+  .tline.alta { border-color: var(--rojo); }
+  .tline-nom { font-size: 15px; font-weight: 600; color: var(--tinta); display: flex; align-items: center; gap: 8px; }
+  .tline-ref { font-size: 9px; background: var(--fondo); color: var(--gris); padding: 2px 6px; border-radius: 6px; letter-spacing: 1px; }
+  .tline-sub { font-size: 11px; color: var(--gris); margin-top: 3px; }
+  .tline-r { text-align: right; flex-shrink: 0; }
+  .tline-v { font-family: 'Ndot'; font-size: 20px; color: var(--tinta); }
+  .tline-v.alta { color: var(--rojo); }
+  .tline-pct { font-size: 10px; color: var(--gris); }
+  /* Tensión: modal edición línea */
+  .confirm.ted { max-width: 380px; text-align: left; }
+  .ted-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 12px; }
+  .ted-grid .ted-full { grid-column: 1 / -1; }
+  .ted-hint { font-size: 11px; color: var(--gris); line-height: 1.4; margin-bottom: 18px; }
+  .ted-del { background: none; border: none; color: var(--rojo); font-family: 'NType'; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1px; font-size: 13px; cursor: pointer; padding: 14px 6px; }
   .refresh { background: none; border: 1px solid var(--gris-claro); border-radius: 20px;
              padding: 7px 14px; font-size: 11px; color: var(--tinta); cursor: pointer; font-weight: 700;
              text-transform: uppercase; letter-spacing: 1px; transition: border-color .15s; font-family: 'NType'; }
@@ -357,6 +408,11 @@ let diasSel = new Set(); // claves de día seleccionadas para pagar
 let filtro = "todo"; // "todo" | "pag" | "pend"
 let modalOpen = false;
 let confirmState = null; // {titulo, texto, okLabel, onOk} para el modal de confirmación
+let tab = "fichar"; // "fichar" | "tension" | "ajustes"
+let lineas = []; // líneas de la tabla de tensión (Supabase)
+let tensEdit = null; // id de línea en edición (o "nueva")
+// Parámetros globales de la calculadora de tensión (guardados en localStorage)
+let tCalc = JSON.parse(localStorage.getItem(LKEY+"_tcalc") || 'null') || { V:12, L:1.5, I:15, e:0.03, mat:"Coure" };
 function aplicarTema(){ document.documentElement.setAttribute("data-theme", tema); }
 function toggleTema(){ tema = (tema==="dark"?"light":"dark"); localStorage.setItem(LKEY+"_tema", tema); aplicarTema(); renderApp(); }
 aplicarTema();
@@ -587,7 +643,213 @@ function fmtClock(ms){
   return m+":"+String(s).padStart(2,"0");
 }
 
+// ── Tensión: datos ─────────────────────────────────────────────
+async function cargarLineas() {
+  if (!sb) return;
+  const { data, error } = await sb.from("lineas_tension").select("*").eq("codigo", codigo).order("orden", {ascending:true}).order("id",{ascending:true});
+  if (error) { console.error(error); return; }
+  lineas = (data||[]).map(r=>({ id:r.id, orden:r.orden||0, nombre:r.nombre||"", ref:r.ref||"",
+    potencia:r.potencia==null?null:parseFloat(r.potencia), intensidad:r.intensidad==null?null:parseFloat(r.intensidad),
+    seccion:r.seccion==null?null:parseFloat(r.seccion), longitud:r.longitud==null?null:parseFloat(r.longitud) }));
+  if (tab==="tension") renderApp();
+}
+async function lineaInsert(l) {
+  const { error } = await sb.from("lineas_tension").insert({ codigo, orden:l.orden||0, nombre:l.nombre||"", ref:l.ref||"",
+    potencia:l.potencia, intensidad:l.intensidad, seccion:l.seccion, longitud:l.longitud });
+  if (error) alert("Error al guardar la línea: "+error.message);
+}
+async function lineaUpdate(id, l) {
+  const { error } = await sb.from("lineas_tension").update({ nombre:l.nombre||"", ref:l.ref||"",
+    potencia:l.potencia, intensidad:l.intensidad, seccion:l.seccion, longitud:l.longitud }).eq("id",id).eq("codigo",codigo);
+  if (error) alert("Error al editar la línea: "+error.message);
+}
+async function lineaDelete(id) {
+  const { error } = await sb.from("lineas_tension").delete().eq("id",id).eq("codigo",codigo);
+  if (error) alert("Error al borrar: "+error.message);
+}
+
+// Intensidad efectiva de una línea: la directa, o P/V si solo hay potencia
+function intensidadLinea(l) {
+  if (l.intensidad!=null && !isNaN(l.intensidad)) return l.intensidad;
+  if (l.potencia!=null && !isNaN(l.potencia) && tCalc.V) return l.potencia/tCalc.V;
+  return null;
+}
+// Caída de tensión de una línea: {pct, volt} según e% = (2·L·I)/(S·y·V)
+function caidaLinea(l) {
+  const I = intensidadLinea(l);
+  const y = tCalc.mat==="Alumini" ? 35 : 56;
+  if (I==null || !l.seccion || !l.longitud || !tCalc.V) return { pct:null, volt:null };
+  const pct = (2*l.longitud*I)/(l.seccion*y*tCalc.V);
+  return { pct, volt: pct*tCalc.V };
+}
+// Sección recomendada por la calculadora: S = (2·L·I)/(y·e%·V)
+function seccionCalc() {
+  const y = tCalc.mat==="Alumini" ? 35 : 56;
+  if (!tCalc.L || !tCalc.I || !tCalc.e || !tCalc.V) return null;
+  return (2*tCalc.L*tCalc.I)/(y*tCalc.e*tCalc.V);
+}
+
+// ── Tensión: vista ─────────────────────────────────────────────
+function renderTension() {
+  const S = seccionCalc();
+  const y = tCalc.mat==="Alumini" ? 35 : 56;
+  const filas = lineas.map(l=>{
+    const I = intensidadLinea(l);
+    const {pct, volt} = caidaLinea(l);
+    const alta = volt!=null && volt>0.5; // límite 0,5 V del Excel
+    return `<button class="tline ${alta?'alta':''}" data-tline="${l.id}">
+      <div class="tline-l">
+        <div class="tline-nom">${escapeHtml(l.nombre||"(sin nombre)")}${l.ref?`<span class="tline-ref">${escapeHtml(l.ref)}</span>`:""}</div>
+        <div class="tline-sub">${I!=null?`${(Math.round(I*100)/100)} A`:"—"} · ${l.seccion?`${l.seccion} mm²`:"—"} · ${l.longitud?`${l.longitud} m`:"—"}</div>
+      </div>
+      <div class="tline-r">
+        <div class="tline-v ${alta?'alta':''}">${volt!=null?`${(Math.round(volt*1000)/1000)} V`:"—"}</div>
+        <div class="tline-pct">${pct!=null?`${(Math.round(pct*10000)/100)}%`:""}</div>
+      </div>
+    </button>`;
+  }).join("");
+
+  $("app").innerHTML = `
+    <header>
+      <div class="logo">N</div>
+      <div class="head-txt"><div class="title">Tensión</div><div class="sub">Caída de tensión</div></div>
+      <button class="icon-btn" id="temaBtn" title="Tema">${tema==="dark"?SOL:LUNA}</button>
+    </header>
+
+    <div class="tcalc">
+      <div class="tcalc-h">Calculadora de sección</div>
+      <div class="tcalc-grid">
+        <label>Material
+          <select id="tc-mat">
+            <option value="Coure" ${tCalc.mat==="Coure"?"selected":""}>Cobre</option>
+            <option value="Alumini" ${tCalc.mat==="Alumini"?"selected":""}>Aluminio</option>
+          </select>
+        </label>
+        <label>Voltaje (V)<input type="number" inputmode="decimal" id="tc-v" value="${tCalc.V}"></label>
+        <label>Longitud (m)<input type="number" inputmode="decimal" id="tc-l" value="${tCalc.L}"></label>
+        <label>Intensidad (A)<input type="number" inputmode="decimal" id="tc-i" value="${tCalc.I}"></label>
+        <label>Caída máx (V)<input type="number" inputmode="decimal" step="0.01" id="tc-e" value="${tCalc.e}"></label>
+      </div>
+      <div class="tcalc-out">
+        <span class="tcalc-lbl">Sección mínima</span>
+        <span class="tcalc-val">${S!=null?`${(Math.round(S*1000)/1000)} mm²`:"—"}</span>
+        <span class="tcalc-note">conductor: ${tCalc.mat==="Alumini"?"aluminio (y=35)":"cobre (y=56)"} · fórmula S=(2·L·I)/(y·e·V)</span>
+      </div>
+    </div>
+
+    <div class="tlist-head">
+      <span>Líneas de la instalación</span>
+      <button class="tadd" id="tAddBtn">+ Añadir</button>
+    </div>
+    <div class="tlist">${filas || `<div class="tvacio">Aún no hay líneas. Añade la primera.</div>`}</div>
+
+    ${tensEdit!=null?renderTensEdit():""}
+    ${confirmState?renderConfirm():""}`;
+
+  $("temaBtn").onclick = toggleTema;
+  $("tAddBtn").onclick = ()=>{ tensEdit="nueva"; renderApp(); };
+  // recalcular al cambiar parámetros de la calculadora
+  const upd = ()=>{
+    tCalc.mat = $("tc-mat").value;
+    tCalc.V = parseFloat($("tc-v").value)||0;
+    tCalc.L = parseFloat($("tc-l").value)||0;
+    tCalc.I = parseFloat($("tc-i").value)||0;
+    tCalc.e = parseFloat($("tc-e").value)||0;
+    localStorage.setItem(LKEY+"_tcalc", JSON.stringify(tCalc));
+    renderApp();
+  };
+  ["tc-mat","tc-v","tc-l","tc-i","tc-e"].forEach(id=>{ const el=$(id); if(el) el.onchange=upd; });
+  $$("[data-tline]").forEach(b=>b.onclick=()=>{ tensEdit=parseInt(b.dataset.tline); renderApp(); });
+  if ($("confirmCancel")) $("confirmCancel").onclick = cerrarConfirm;
+  if ($("confirmBackdrop")) $("confirmBackdrop").onclick = (e)=>{ if(e.target===$("confirmBackdrop")) cerrarConfirm(); };
+  if ($("confirmOk")) $("confirmOk").onclick = ()=>{ const fn=confirmState&&confirmState.onOk; confirmState=null; if(fn) fn(); };
+  bindTensEdit();
+}
+
+// Modal de edición/alta de una línea
+function renderTensEdit() {
+  const nueva = tensEdit==="nueva";
+  const l = nueva ? {nombre:"",ref:"",potencia:null,intensidad:null,seccion:null,longitud:null} : (lineas.find(x=>x.id===tensEdit)||{});
+  return `<div class="modal-backdrop centrado" id="tedBackdrop">
+    <div class="confirm ted">
+      <div class="confirm-t">${nueva?"Nueva línea":"Editar línea"}</div>
+      <div class="ted-grid">
+        <label class="ted-full">Nombre<input id="ted-nom" value="${escapeHtml(l.nombre||"")}" placeholder="Ej. Bomba de agua"></label>
+        <label>Ref.<input id="ted-ref" value="${escapeHtml(l.ref||"")}" placeholder="opcional"></label>
+        <label>Longitud (m)<input id="ted-lon" type="number" inputmode="decimal" value="${l.longitud??""}"></label>
+        <label>Potencia (W)<input id="ted-pot" type="number" inputmode="decimal" value="${l.potencia??""}"></label>
+        <label>Intensidad (A)<input id="ted-int" type="number" inputmode="decimal" value="${l.intensidad??""}" placeholder="o se calcula de W"></label>
+        <label>Sección (mm²)<input id="ted-sec" type="number" inputmode="decimal" value="${l.seccion??""}"></label>
+      </div>
+      <div class="ted-hint">Rellena potencia <b>o</b> intensidad. Si pones potencia, la intensidad se calcula (W ÷ voltaje).</div>
+      <div class="confirm-btns">
+        ${!nueva?`<button class="ted-del" id="tedDel">Borrar</button>`:""}
+        <button class="confirm-cancel" id="tedCancel">Cancelar</button>
+        <button class="confirm-ok" id="tedSave">Guardar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function bindTensEdit() {
+  if (tensEdit==null) return;
+  const cerrar = ()=>{ tensEdit=null; renderApp(); };
+  if ($("tedCancel")) $("tedCancel").onclick = cerrar;
+  if ($("tedBackdrop")) $("tedBackdrop").onclick = (e)=>{ if(e.target===$("tedBackdrop")) cerrar(); };
+  if ($("tedSave")) $("tedSave").onclick = async ()=>{
+    const num = v => { const n=parseFloat(v); return isNaN(n)?null:n; };
+    const l = {
+      nombre: $("ted-nom").value.trim(),
+      ref: $("ted-ref").value.trim(),
+      longitud: num($("ted-lon").value),
+      potencia: num($("ted-pot").value),
+      intensidad: num($("ted-int").value),
+      seccion: num($("ted-sec").value),
+    };
+    if (!l.nombre) { alert("Ponle un nombre a la línea."); return; }
+    if (tensEdit==="nueva") { l.orden = lineas.length; await lineaInsert(l); }
+    else await lineaUpdate(tensEdit, l);
+    tensEdit=null;
+    await cargarLineas();
+  };
+  if ($("tedDel")) $("tedDel").onclick = ()=>{
+    const id = tensEdit;
+    confirmar({ titulo:"¿Borrar esta línea?", texto:"No se puede deshacer.", okLabel:"Borrar", onOk: async ()=>{ await lineaDelete(id); tensEdit=null; await cargarLineas(); } });
+  };
+}
+
+// Despachador de pestañas: pinta la vista activa y la barra de navegación inferior.
 function renderApp() {
+  if (tab === "tension") renderTension();
+  else if (tab === "ajustes") renderAjustesTab();
+  else renderFichar();
+  inyectarNav();
+}
+
+// Iconos de la barra inferior
+const IC_FICHAR = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+const IC_TENSION = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>';
+const IC_AJUSTES = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>';
+
+// Inserta (o reemplaza) la barra de navegación inferior dentro de #app
+function inyectarNav() {
+  const nav = document.createElement("nav");
+  nav.className = "navbar";
+  nav.innerHTML = `
+    <button class="navbtn ${tab==='fichar'?'on':''}" data-tab="fichar">${IC_FICHAR}<span>Fichar</span></button>
+    <button class="navbtn ${tab==='tension'?'on':''}" data-tab="tension">${IC_TENSION}<span>Tensión</span></button>
+    <button class="navbtn ${tab==='ajustes'?'on':''}" data-tab="ajustes">${IC_AJUSTES}<span>Ajustes</span></button>`;
+  $("app").appendChild(nav);
+  nav.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
+    if (tab === b.dataset.tab) return;
+    tab = b.dataset.tab;
+    modalOpen=false; modoSel=false; tensEdit=null;
+    renderApp();
+    if (tab === "tension") cargarLineas();
+  });
+}
+
+function renderFichar() {
   const totMs = historial.reduce((a,s)=>a+(s.fin-s.inicio),0);
   const totH = totMs/3600000;
   let hPag=0, hPend=0, eurPag=0, eurPend=0;
@@ -605,7 +867,6 @@ function renderApp() {
       </div>
       <button class="icon-btn" id="temaBtn" title="Tema">${tema==="dark"?SOL:LUNA}</button>
       ${(!esAdmin() && persona==="Hugo")?`<button class="icon-btn" id="ojoBtn" title="Mostrar/ocultar precio">${localStorage.getItem(LKEY+"_hugoOcultaPrecio")==="1"?OJO_OFF:OJO}</button>`:""}
-      ${esAdmin()?`<button class="icon-btn" id="ajustesBtn" title="Ajustes">${ENGRANAJE}</button>`:""}
     </header>
     ${sinCerrar?`<div class="warn">
       <div class="warn-t">Fichaje sin cerrar</div>
@@ -677,10 +938,6 @@ function renderApp() {
     </div>
     <div class="list" id="list"></div>
     ${modoSel?`<div class="selbar" id="selbar"></div>`:""}
-    <div class="foot">
-      <span class="foot-user">${escapeHtml(persona||"")}${esAdmin()?' <span class="badge">admin</span>':''}</span>
-      <a id="salir" class="foot-salir">Salir</a>
-    </div>
     ${modalOpen?renderModalOpciones():""}
     ${confirmState?renderConfirm():""}`;
 
@@ -711,11 +968,6 @@ function renderApp() {
     renderApp();
   };
   if ($("addBtn")) $("addBtn").onclick = ()=>abrirManual();
-  $("salir").onclick = () => {
-    localStorage.removeItem(LKEY+"_codigo"); localStorage.removeItem(LKEY+"_persona");
-    codigo=null; persona=null; renderGate();
-  };
-  if ($("ajustesBtn")) $("ajustesBtn").onclick = renderAjustes;
   if ($("selBtn")) $("selBtn").onclick = ()=>{ modoSel=true; diasSel.clear(); renderApp(); };
   if ($("selCancel")) $("selCancel").onclick = ()=>{ modoSel=false; diasSel.clear(); renderApp(); };
   if ($("opcionesBtn")) $("opcionesBtn").onclick = ()=>{ modalOpen=true; renderApp(); };
@@ -830,13 +1082,26 @@ function actualizarSelbar() {
 }
 
 // ── Pantalla de ajustes (solo admin) ───────────────────────────
-function renderAjustes() {
+function renderAjustesTab() {
+  const admin = esAdmin();
+  const hugoOculta = localStorage.getItem(LKEY+"_hugoOcultaPrecio")==="1";
   $("app").innerHTML = `
     <header>
-      <button class="icon-btn" id="volverBtn" title="Volver">${FLECHA}</button>
-      <div class="head-txt"><div class="title">Ajustes</div><div class="sub">Solo administrador</div></div>
+      <div class="logo">N</div>
+      <div class="head-txt"><div class="title">Ajustes</div><div class="sub">${admin?'Administrador':escapeHtml(persona||"")}</div></div>
+      <button class="icon-btn" id="temaBtn" title="Tema">${tema==="dark"?SOL:LUNA}</button>
     </header>
 
+    ${!admin?`
+    <div class="set-group">
+      <div class="set-label">Precios</div>
+      <div class="set-row">
+        <div><div class="set-row-t">Ocultar precios</div><div class="set-row-s">Solo verás las horas, no el dinero</div></div>
+        <button class="switch ${hugoOculta?'on':''}" id="tglHugoLocal" role="switch"><span class="knob"></span></button>
+      </div>
+    </div>`:""}
+
+    ${admin?`
     <div class="set-group">
       <div class="set-label">Ver la app como</div>
       <div class="seg2">
@@ -852,6 +1117,7 @@ function renderAjustes() {
         <span class="set-val">${tarifa} €/h</span>
         <button class="pill" id="editTarifa">Cambiar</button>
       </div>
+      <div class="set-hint">Solo afecta a los fichajes nuevos. Los antiguos mantienen su tarifa.</div>
     </div>
 
     <div class="set-group">
@@ -888,19 +1154,34 @@ function renderAjustes() {
         <div><div class="set-row-t">Borrar todo el historial</div><div class="set-row-s">Elimina todos los fichajes. Irreversible.</div></div>
         <button class="pill danger" id="borrarTodo">Borrar</button>
       </div>
+    </div>`:""}
+
+    <div class="set-group">
+      <div class="set-label">Sesión</div>
+      <div class="set-row">
+        <div><div class="set-row-t">${escapeHtml(persona||"")}${admin?' · admin':''}</div><div class="set-row-s">Cerrar sesión en este dispositivo</div></div>
+        <button class="pill" id="salirBtn">Salir</button>
+      </div>
     </div>`;
 
-  $("volverBtn").onclick = renderApp;
+  $("temaBtn").onclick = toggleTema;
+  if ($("tglHugoLocal")) $("tglHugoLocal").onclick = ()=>{
+    localStorage.setItem(LKEY+"_hugoOcultaPrecio", hugoOculta?"0":"1"); renderApp();
+  };
   $$("[data-persona]").forEach(b=>b.onclick=async ()=>{
     persona = b.dataset.persona; localStorage.setItem(LKEY+"_persona", persona);
-    await cargar(); // recarga con la vista de la otra persona
+    await cargar();
   });
-  $("editTarifa").onclick = onTarifa;
-  $("tglGlobal").onclick = async ()=>{ ocultarGlobal = !ocultarGlobal; await guardarAjustes(); renderAjustes(); };
-  $("tglHugo").onclick = async ()=>{ ocultarHugo = !ocultarHugo; await guardarAjustes(); renderAjustes(); };
-  $("resumenPago").onclick = generarResumenPago;
-  $("syncBtn").onclick = async ()=>{ await cargar(); };
-  $("borrarTodo").onclick = borrarTodo;
+  if ($("editTarifa")) $("editTarifa").onclick = onTarifa;
+  if ($("tglGlobal")) $("tglGlobal").onclick = async ()=>{ ocultarGlobal = !ocultarGlobal; await guardarAjustes(); renderApp(); };
+  if ($("tglHugo")) $("tglHugo").onclick = async ()=>{ ocultarHugo = !ocultarHugo; await guardarAjustes(); renderApp(); };
+  if ($("resumenPago")) $("resumenPago").onclick = generarResumenPago;
+  if ($("syncBtn")) $("syncBtn").onclick = async ()=>{ await cargar(); };
+  if ($("borrarTodo")) $("borrarTodo").onclick = borrarTodo;
+  $("salirBtn").onclick = () => {
+    localStorage.removeItem(LKEY+"_codigo"); localStorage.removeItem(LKEY+"_persona");
+    codigo=null; persona=null; renderGate();
+  };
 }
 
 function generarResumenPago() {
@@ -1202,7 +1483,7 @@ async function onTarifa() {
     tarifa = parseFloat(v);
     localStorage.setItem(LKEY+"_tarifa", tarifa);
     await guardarAjustes();
-    renderAjustes();
+    renderApp();
   }
 }
 
