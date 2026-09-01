@@ -232,7 +232,8 @@
         color: var(--tinta); font-family: 'NType'; font-size: 15px; -webkit-appearance: none; width: 100%; }
   .tcalc-out { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--gris-claro); display: flex; flex-direction: column; gap: 3px; }
   .tcalc-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gris); }
-  .tcalc-val { font-family: 'Ndot'; font-size: 32px; color: var(--rojo); letter-spacing: 1px; }
+  .tcalc-val { font-family: 'Ndot'; font-size: 27px; color: var(--rojo); letter-spacing: 1px; }
+  .tcalc-note2 { font-size: 10px; color: var(--gris); opacity: .6; margin-top: 2px; }
   .tcalc-note { font-size: 10px; color: var(--gris); opacity: .8; }
   /* Tensión: lista de líneas */
   .tlist-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -689,9 +690,32 @@ function seccionCalc() {
   return (2*tCalc.L*tCalc.I)/(y*tCalc.e*tCalc.V);
 }
 
+// Tabla estándar de cables (12V DC, cobre, agrupado/en vaina, conservador).
+// mm², AWG equivalente, amperios máximos.
+const TABLA_CABLES = [
+  {mm:0.5, awg:20, a:7},  {mm:0.75,awg:18, a:10}, {mm:1.0, awg:17, a:13},
+  {mm:1.5, awg:15, a:16}, {mm:2.5, awg:13, a:25}, {mm:4,  awg:11, a:32},
+  {mm:6,   awg:9,  a:40}, {mm:10,  awg:7,  a:60}, {mm:16, awg:5,  a:80},
+  {mm:25,  awg:3,  a:110},{mm:35,  awg:2,  a:140},
+];
+// Recomienda el cable: el más fino que cumpla A LA VEZ caída de tensión y ampacidad.
+function recomendarCable() {
+  const sMin = seccionCalc();              // mm² mínimos por caída de tensión
+  const I = tCalc.I;                        // amperios de la línea
+  if (sMin==null || !I) return null;
+  const porCaida = TABLA_CABLES.find(c=>c.mm>=sMin);
+  const porAmp   = TABLA_CABLES.find(c=>c.a>=I);
+  if (!porCaida || !porAmp) return { sMin, sobrepasa:true }; // fuera de tabla
+  // el que mande es el de mayor sección
+  const elegido = porCaida.mm >= porAmp.mm ? porCaida : porAmp;
+  const manda = porCaida.mm > porAmp.mm ? "caida" : (porAmp.mm > porCaida.mm ? "amp" : "ambos");
+  return { sMin, elegido, manda, porCaida, porAmp };
+}
+
 // ── Tensión: vista ─────────────────────────────────────────────
 function renderTension() {
   const S = seccionCalc();
+  const rec = recomendarCable();
   const y = tCalc.mat==="Alumini" ? 35 : 56;
   const filas = lineas.map(l=>{
     const I = intensidadLinea(l);
@@ -731,9 +755,16 @@ function renderTension() {
         <label>Caída máx (V)<input type="number" inputmode="decimal" step="0.01" id="tc-e" value="${tCalc.e}"></label>
       </div>
       <div class="tcalc-out">
-        <span class="tcalc-lbl">Sección mínima</span>
-        <span class="tcalc-val">${S!=null?`${(Math.round(S*1000)/1000)} mm²`:"—"}</span>
-        <span class="tcalc-note">conductor: ${tCalc.mat==="Alumini"?"aluminio (y=35)":"cobre (y=56)"} · fórmula S=(2·L·I)/(y·e·V)</span>
+        <span class="tcalc-lbl">Cable recomendado</span>
+        ${rec==null ? `<span class="tcalc-val">—</span><span class="tcalc-note">Rellena longitud, intensidad y caída máx.</span>`
+          : rec.sobrepasa ? `<span class="tcalc-val">⚠︎</span><span class="tcalc-note">Fuera de tabla: la corriente o la longitud son muy altas. Consulta a un instalador.</span>`
+          : `<span class="tcalc-val">${rec.elegido.mm} mm² · AWG ${rec.elegido.awg}</span>
+             <span class="tcalc-note">${rec.manda==="amp"
+                  ? `manda la corriente (${tCalc.I} A). Por caída bastaría ${rec.porCaida.mm} mm², pero el cable debe aguantar los amperios.`
+                  : rec.manda==="caida"
+                  ? `manda la caída de tensión (cable largo). Por corriente bastaría ${rec.porAmp.mm} mm², pero a esa longitud se pierde voltaje.`
+                  : `cumple caída de tensión y corriente justo con esta sección.`}</span>
+             <span class="tcalc-note2">mínimo teórico por caída: ${(Math.round(rec.sMin*1000)/1000)} mm² · ${tCalc.mat==="Alumini"?"aluminio":"cobre"}</span>`}
       </div>
     </div>
 
